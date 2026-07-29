@@ -1,0 +1,53 @@
+// Type utilities shared across client and server
+export type PropertyWithRelations = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  propertyType: string;
+  status: string;
+  furnishing: string | null;
+  price: number;
+  pricePerSqft: number | null;
+  area: number;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  balconies: number | null;
+  floor: number | null;
+  totalFloors: number | null;
+  facing: string | null;
+  address: string;
+  location: string;
+  city: string;
+  state: string;
+  pincode: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  amenities: string[];
+  highlights: string[];
+  reraId: string | null;
+  isFeatured: boolean;
+  isActive: boolean;
+  views: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  builder: {
+    id: number;
+    name: string;
+    slug: string;
+    email: string;
+    phone: string;
+    logo: string | null;
+    description: string | null;
+    experienceYears: number | null;
+    projectsCount: number | null;
+  };
+  images: {
+    id: number;
+    imageUrl: string;
+    altText: string | null;
+    isCover: boolean | null;
+    sortOrder: number | null;
+  }[];
+  coverImage: string | null;
+};
