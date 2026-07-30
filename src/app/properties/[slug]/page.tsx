@@ -38,7 +38,6 @@ import {
 } from "@/lib/utils";
 import { PropertyMapWrapper } from "@/components/property-map-wrapper";
 import { LeadForm } from "@/components/lead-form";
-import { ConsultationCta } from "@/components/consultation-cta";
 import { PropertyCard } from "@/components/property-card";
 import { PropertyGallery } from "@/components/property-gallery";
 
@@ -572,8 +571,6 @@ export default async function PropertyDetailsPage({
           </div>
         </section>
       )}
-
-      <ConsultationCta />
     </>
   );
 }

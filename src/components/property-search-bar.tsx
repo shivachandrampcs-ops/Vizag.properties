@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search, MapPin, Home, IndianRupee } from "lucide-react";
 import { VIZAG_LOCATIONS } from "@/lib/utils";
 
@@ -25,17 +25,23 @@ export function PropertySearchBar({
   );
   const [budget, setBudget] = useState(initialValues?.budget ?? "");
 
-  useEffect(() => {
+  // Re-sync local field state whenever the incoming initialValues change
+  // (e.g. the URL search params update on the server-rendered parent).
+  // Adjusting state during render avoids the extra cascading render that
+  // a `useEffect` with these values as dependencies would trigger.
+  const [prevInitialValues, setPrevInitialValues] = useState(initialValues);
+  if (
+    prevInitialValues?.search !== initialValues?.search ||
+    prevInitialValues?.location !== initialValues?.location ||
+    prevInitialValues?.propertyType !== initialValues?.propertyType ||
+    prevInitialValues?.budget !== initialValues?.budget
+  ) {
+    setPrevInitialValues(initialValues);
     setSearch(initialValues?.search ?? "");
     setLocation(initialValues?.location ?? "");
     setPropertyType(initialValues?.propertyType ?? "");
     setBudget(initialValues?.budget ?? "");
-  }, [
-    initialValues?.search,
-    initialValues?.location,
-    initialValues?.propertyType,
-    initialValues?.budget,
-  ]);
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();

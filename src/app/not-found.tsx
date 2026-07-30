@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Home, Search } from "lucide-react";
-import { ConsultationCta } from "@/components/consultation-cta";
 
 export default function NotFound() {
   return (
@@ -12,7 +11,7 @@ export default function NotFound() {
             Property Not Found
           </h1>
           <p className="mt-3 text-lg text-slate-600 max-w-xl mx-auto">
-            We couldn't find the page you're looking for. The property may
+            We couldn&apos;t find the page you&apos;re looking for. The property may
             have been removed or the link is incorrect.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -33,7 +32,6 @@ export default function NotFound() {
           </div>
         </div>
       </section>
-      <ConsultationCta />
     </>
   );
 }

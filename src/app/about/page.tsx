@@ -16,7 +16,6 @@ import {
   Home,
   Key,
 } from "lucide-react";
-import { ConsultationCta } from "@/components/consultation-cta";
 import { SITE_CONFIG } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -97,7 +96,7 @@ export default function AboutPage() {
               About Vizag Properties
             </div>
             <h1 className="mt-5 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              Vizag's Most Trusted
+              Vizag&apos;s Most Trusted
               <br />
               Property Platform
             </h1>
@@ -213,7 +212,7 @@ export default function AboutPage() {
                 Our Vision
               </h3>
               <p className="mt-3 text-slate-700 leading-relaxed">
-                To become India's most trusted real estate platform by setting
+                To become India&apos;s most trusted real estate platform by setting
                 the gold standard in property discovery, builder verification
                 and customer service - starting from Vizag and expanding to
                 every growing city.
@@ -344,8 +343,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      <ConsultationCta />
     </>
   );
 }

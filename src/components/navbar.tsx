@@ -25,17 +25,22 @@ export function Navbar() {
   const [loginOpen, setLoginOpen] = useState(false);
   const pathname = usePathname();
 
+  // Close the mobile menu / login dropdown whenever the route changes.
+  // Adjusting state during render (rather than in an effect) avoids the
+  // extra cascading render that a `useEffect([pathname])` would trigger.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setOpen(false);
+    setLoginOpen(false);
+  }
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  useEffect(() => {
-    setOpen(false);
-    setLoginOpen(false);
-  }, [pathname]);
 
   return (
     <header

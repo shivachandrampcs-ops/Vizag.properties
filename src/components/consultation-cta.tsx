@@ -156,7 +156,7 @@ export function ConsultationCta({
                 </div>
                 <div className="text-lg font-bold">Send us a Message</div>
                 <div className="text-sm text-brand-100 mt-0.5">
-                  We'll respond within 1 hour
+                  We&apos;ll respond within 1 hour
                 </div>
               </div>
             </Link>

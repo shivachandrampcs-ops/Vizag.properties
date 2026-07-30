@@ -15,19 +15,19 @@ import {
   Phone,
   MessageCircle,
   Home,
-  Building2,
   Sparkles,
   CheckCircle,
   MapPin,
   Search,
+  BadgeCheck,
 } from "lucide-react";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
 import { getFeaturedProperties, getLatestProperties } from "@/lib/queries";
 import { PropertyCard } from "@/components/property-card";
 import { PropertySearchBar } from "@/components/property-search-bar";
-import { ConsultationCta } from "@/components/consultation-cta";
 import { VIZAG_LOCATIONS, SITE_CONFIG } from "@/lib/utils";
+import { LOCATION_IMAGES, DEFAULT_LOCATION_IMAGE } from "@/lib/location-images";
 
 export const dynamic = "force-dynamic";
 
@@ -37,48 +37,36 @@ const testimonials = [
     role: "IT Professional, MVP Colony",
     text: "Vizag Properties helped me find a perfect 3 BHK apartment at MVP Colony. The team was extremely professional and the entire process from site visit to registration was seamless. Highly recommended!",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
   },
   {
     name: "Sneha Reddy",
     role: "Doctor, Rushikonda",
     text: "We were looking for a sea-facing villa and Vizag Properties showed us multiple options. Their local knowledge of Rushikonda and Bheemunipatnam was invaluable. Got a great deal!",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
   },
   {
     name: "Anil Sharma",
     role: "Business Owner, Gajuwaka",
     text: "Bought a commercial space for my business through Vizag Properties. The team understood my requirements perfectly and showed me RERA-compliant options within my budget.",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop",
   },
   {
     name: "Lakshmi Prasad",
     role: "Retired Banker, Madhurawada",
     text: "I wanted a peaceful plot to build my retirement home. The team at Vizag Properties took me to DTCP-approved layouts in Madhurawada and Sabbavaram. Excellent service!",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&h=200&fit=crop",
   },
   {
     name: "Vikram Singh",
     role: "NRI Investor",
     text: "As an NRI, I was worried about investing in Vizag from abroad. Vizag Properties handled everything - from selection to documentation. Trustworthy and transparent.",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop",
   },
   {
     name: "Priya Naidu",
     role: "First-time Buyer",
     text: "As a first-time buyer, I had many questions. The team patiently explained everything about home loans, RERA, registration and helped me choose the right apartment.",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
   },
 ];
 
@@ -240,7 +228,7 @@ export default async function HomePage() {
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium backdrop-blur-sm">
                 <Sparkles className="h-3.5 w-3.5 text-gold-400" />
-                Visakhapatnam's Most Trusted Property Platform
+                Visakhapatnam&apos;s Most Trusted Property Platform
               </div>
               <h1 className="mt-5 text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight">
                 Find Your Dream
@@ -395,21 +383,34 @@ export default async function HomePage() {
               Vizag.
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {VIZAG_LOCATIONS.slice(0, 18).map((loc) => (
-              <Link
-                key={loc}
-                href={`/properties?location=${encodeURIComponent(loc)}`}
-                className="group flex flex-col items-center justify-center p-5 rounded-2xl bg-slate-50 hover:bg-gradient-to-br hover:from-brand-50 hover:to-brand-100 border border-slate-200 hover:border-brand-200 transition-all text-center"
-              >
-                <div className="h-10 w-10 rounded-xl bg-white group-hover:bg-brand-600 group-hover:text-white flex items-center justify-center text-brand-600 mb-2 transition-colors shadow-sm">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <div className="text-sm font-semibold text-slate-900 group-hover:text-brand-700">
-                  {loc}
-                </div>
-              </Link>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {VIZAG_LOCATIONS.slice(0, 18).map((loc, i) => {
+              const img = LOCATION_IMAGES[loc] ?? DEFAULT_LOCATION_IMAGE;
+              return (
+                <Link
+                  key={loc}
+                  href={`/properties?location=${encodeURIComponent(loc)}`}
+                  className="group relative block aspect-[4/5] overflow-hidden rounded-2xl shadow-sm hover:shadow-2xl transition-shadow duration-300"
+                >
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    loading={i < 6 ? undefined : "lazy"}
+                    sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 23vw, 15vw"
+                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent transition-opacity duration-300 group-hover:from-black/90" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 p-3.5">
+                    <MapPin className="h-4 w-4 text-gold-400 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-white leading-tight drop-shadow-sm">
+                      {loc}
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10 group-hover:ring-gold-400/40 transition-colors duration-300" />
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -515,25 +516,23 @@ export default async function HomePage() {
             {testimonials.map((t) => (
               <div
                 key={t.name}
-                className="p-6 rounded-2xl bg-white border border-slate-200 hover:shadow-xl transition-shadow relative"
+                className="group relative p-8 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 hover:border-brand-200 transition-all duration-300"
               >
-                <Quote className="absolute top-5 right-5 h-8 w-8 text-brand-100" />
-                <div className="flex items-center gap-1 text-gold-500">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-1 text-gold-500">
+                    {Array.from({ length: t.rating }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-current" />
+                    ))}
+                  </div>
+                  <Quote className="h-8 w-8 text-brand-100 group-hover:text-brand-200 transition-colors" />
                 </div>
-                <p className="mt-4 text-slate-700 text-sm leading-relaxed">
+                <p className="mt-5 text-slate-700 text-[15px] leading-relaxed">
                   &ldquo;{t.text}&rdquo;
                 </p>
-                <div className="mt-5 flex items-center gap-3 pt-5 border-t border-slate-100">
-                  <Image
-                    src={t.image}
-                    alt={t.name}
-                    width={44}
-                    height={44}
-                    className="h-11 w-11 rounded-full object-cover"
-                  />
+                <div className="mt-6 flex items-center gap-3 pt-6 border-t border-slate-100">
+                  <div className="h-10 w-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
+                    <BadgeCheck className="h-5 w-5" />
+                  </div>
                   <div>
                     <div className="text-sm font-bold text-slate-900">
                       {t.name}
@@ -619,8 +618,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ────────── CONSULTATION CTA ────────── */}
-      <ConsultationCta />
     </>
   );
 }

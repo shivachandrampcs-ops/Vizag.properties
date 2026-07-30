@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import { LeadForm } from "@/components/lead-form";
-import { ConsultationCta } from "@/components/consultation-cta";
 import { SITE_CONFIG } from "@/lib/utils";
 import Link from "next/link";
 import { ContactMapWrapper } from "@/components/contact-map-wrapper";
@@ -45,7 +44,7 @@ export default function ContactPage() {
           </nav>
           <div className="max-w-3xl">
             <div className="text-sm font-semibold text-brand-600 uppercase tracking-wider">
-              We'd Love to Hear From You
+              We&apos;d Love to Hear From You
             </div>
             <h1 className="mt-2 text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900">
               Get in Touch
@@ -184,8 +183,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-
-      <ConsultationCta />
     </>
   );
 }

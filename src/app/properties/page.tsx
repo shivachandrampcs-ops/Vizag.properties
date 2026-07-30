@@ -1,10 +1,10 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
 import { getProperties } from "@/lib/queries";
 import { PropertyCard } from "@/components/property-card";
 import { PropertySearchBar } from "@/components/property-search-bar";
-import { ConsultationCta } from "@/components/consultation-cta";
 import { LeadForm } from "@/components/lead-form";
 import { Building2, Sparkles } from "lucide-react";
 import type { PropertyWithRelations } from "@/lib/utils-types";
@@ -133,9 +133,9 @@ export default async function PropertiesPage({
       <section className="bg-gradient-to-br from-brand-50 to-white border-b border-slate-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <nav className="flex items-center gap-2 text-xs text-slate-500 mb-4">
-            <a href="/" className="hover:text-brand-600">
+            <Link href="/" className="hover:text-brand-600">
               Home
-            </a>
+            </Link>
             <span>/</span>
             <span className="text-slate-700">Properties</span>
           </nav>
@@ -188,12 +188,12 @@ export default async function PropertiesPage({
                     {f.label}
                   </span>
                 ))}
-                <a
+                <Link
                   href="/properties"
                   className="text-xs text-brand-600 hover:text-brand-700 font-semibold underline ml-1"
                 >
                   Clear all
-                </a>
+                </Link>
               </div>
             )}
           </div>
@@ -211,12 +211,12 @@ export default async function PropertiesPage({
                 can help you find the perfect property in Vizag.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <a
+                <Link
                   href="/properties"
                   className="px-5 py-2.5 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700"
                 >
                   View All Properties
-                </a>
+                </Link>
                 <a
                   href={SITE_CONFIG.whatsapp}
                   target="_blank"
@@ -243,7 +243,7 @@ export default async function PropertiesPage({
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div>
               <div className="text-sm font-semibold text-brand-600 uppercase tracking-wider">
-                Can't Find What You're Looking For?
+                Can&apos;t Find What You&apos;re Looking For?
               </div>
               <h2 className="mt-2 text-3xl md:text-4xl font-bold text-slate-900">
                 Tell Us Your Requirements
@@ -272,8 +272,6 @@ export default async function PropertiesPage({
           </div>
         </div>
       </section>
-
-      <ConsultationCta />
     </>
   );
 }
