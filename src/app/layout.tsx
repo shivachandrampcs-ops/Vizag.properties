@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { FloatingContact } from "@/components/floating-contact";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import { SITE_CONFIG } from "@/lib/utils";
 
 const inter = Inter({
@@ -135,6 +136,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="bg-white text-slate-900 antialiased min-h-screen flex flex-col">
+        <Suspense fallback={null}>
+          <GoogleAnalytics />
+        </Suspense>
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
