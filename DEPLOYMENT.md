@@ -275,13 +275,51 @@ After first deployment, the app auto-seeds. Use these credentials:
 - Email: `contact@sravanthi.com`
 - Password: `Builder@123`
 
-⚠️ **Important:** Change these passwords immediately after first login by updating the database directly:
+⚠️ **Important:** Change these immediately after first login.
+
+### Recommended: `scripts/set-credentials.js`
+
+This repo includes a script that hashes your new password with the same
+bcrypt logic the app uses (`src/lib/auth.ts`) and updates the row directly
+in Postgres/Neon. Credentials are passed as environment variables so
+nothing sensitive is ever committed to git.
+
+```bash
+# See current admin/builder emails
+node scripts/set-credentials.js --list
+
+# Update the admin login
+ADMIN_EMAIL="you@yourdomain.com" \
+ADMIN_PASSWORD="YourNewStrongPassword!23" \
+node scripts/set-credentials.js --admin
+
+# Update a builder login (BUILDER_CURRENT_EMAIL must match an existing row)
+BUILDER_CURRENT_EMAIL="contact@sravanthi.com" \
+BUILDER_EMAIL="you@yourdomain.com" \
+BUILDER_PASSWORD="YourNewStrongPassword!23" \
+node scripts/set-credentials.js --builder
+```
+
+### Manual alternative: raw SQL
+
+If you'd rather do it by hand, generate a bcrypt hash and run the `UPDATE`
+yourself:
+
+```bash
+# Generate a bcrypt hash for your new password (10 salt rounds, matches src/lib/auth.ts)
+node -e "console.log(require('bcryptjs').hashSync('YourNewStrongPassword!23', 10))"
+```
 
 ```sql
--- Generate a new bcrypt hash for your new password
--- Use: node -e "console.log(require('bcryptjs').hashSync('YourNewPassword', 10))"
-UPDATE admins SET password_hash = 'NEW_HASH' WHERE email = 'admin@vizag.properties';
-UPDATE builders SET password_hash = 'NEW_HASH' WHERE email = 'contact@sravanthi.com';
+-- Admin (email is unique — this changes both email and password in one row)
+UPDATE admins
+SET email = 'you@yourdomain.com', password_hash = 'PASTE_THE_HASH_HERE'
+WHERE email = 'admin@vizag.properties';
+
+-- Builder (identify the row by its current email)
+UPDATE builders
+SET email = 'you@yourdomain.com', password_hash = 'PASTE_THE_HASH_HERE'
+WHERE email = 'contact@sravanthi.com';
 ```
 
 ## Architecture
