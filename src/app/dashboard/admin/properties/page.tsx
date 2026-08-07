@@ -7,8 +7,9 @@ import {
   DashboardShell,
   adminNavItems,
 } from "@/components/dashboard-shell";
-import { Home, ExternalLink, Eye } from "lucide-react";
+import { Home, ExternalLink, Eye, Plus, Edit } from "lucide-react";
 import { formatPrice, statusLabel } from "@/lib/utils";
+import { DeletePropertyButton } from "@/components/delete-property-button";
 
 export const dynamic = "force-dynamic";
 
@@ -31,13 +32,22 @@ export default async function AdminPropertiesPage() {
       user={{ name: session.name, email: session.email, role: "Admin" }}
       navItems={adminNavItems}
     >
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-          Manage Properties
-        </h1>
-        <p className="mt-1 text-slate-600">
-          {allProperties.length} properties listed across Vizag
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+            Manage Properties
+          </h1>
+          <p className="mt-1 text-slate-600">
+            {allProperties.length} properties listed across Vizag
+          </p>
+        </div>
+        <Link
+          href="/dashboard/admin/properties/new"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700"
+        >
+          <Plus className="h-4 w-4" />
+          Add Property
+        </Link>
       </div>
 
       {allProperties.length === 0 ? (
@@ -120,15 +130,28 @@ export default async function AdminPropertiesPage() {
                       <Eye className="h-3.5 w-3.5 text-slate-400" />
                       {p.views}
                     </td>
-                    <td className="p-4 text-right">
-                      <Link
-                        href={`/properties/${p.slug}`}
-                        target="_blank"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        View
-                      </Link>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/properties/${p.slug}`}
+                          target="_blank"
+                          className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+                          title="View"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={`/dashboard/admin/properties/${p.id}/edit`}
+                          className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+                          title="Edit"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                        <DeletePropertyButton
+                          id={p.id}
+                          apiPath={`/api/admin/properties/${p.id}`}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

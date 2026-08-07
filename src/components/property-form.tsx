@@ -23,20 +23,39 @@ type PropertyImage = {
   sortOrder?: number;
 };
 
+type BuilderOption = { id: number; name: string };
+
 export function PropertyForm({
   initial,
   propertyId,
   existingImages = [],
+  mode = "builder",
+  builders = [],
+  initialBuilderId,
 }: {
   initial?: Partial<PropertyInput>;
   propertyId?: number;
   existingImages?: PropertyImage[];
+  /** "builder" (default): builder manages their own properties.
+   *  "admin": admin manages any property and must choose which builder it belongs to. */
+  mode?: "builder" | "admin";
+  /** Only used when mode="admin" — list of builders to assign the property to. */
+  builders?: BuilderOption[];
+  /** Only used when mode="admin" — preselects the builder when editing an existing property. */
+  initialBuilderId?: number;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [imageInput, setImageInput] = useState("");
   const [images, setImages] = useState<PropertyImage[]>(existingImages);
+  const [builderId, setBuilderId] = useState<string>(
+    initialBuilderId ? String(initialBuilderId) : ""
+  );
+
+  const apiBase = mode === "admin" ? "/api/admin/properties" : "/api/builder/properties";
+  const redirectPath =
+    mode === "admin" ? "/dashboard/admin/properties" : "/dashboard/builder/properties";
 
   const {
     register,
@@ -104,11 +123,16 @@ export function PropertyForm({
       setError("Please add at least one image");
       return;
     }
+    if (mode === "admin" && !builderId) {
+      setError("Please select a builder for this property");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const payload = {
         ...data,
+        ...(mode === "admin" ? { builderId: Number(builderId) } : {}),
         amenities: data.amenities
           ? (data.amenities as string)
               .split(",")
@@ -128,9 +152,7 @@ export function PropertyForm({
           sortOrder: i,
         })),
       };
-      const url = propertyId
-        ? `/api/builder/properties/${propertyId}`
-        : "/api/builder/properties";
+      const url = propertyId ? `${apiBase}/${propertyId}` : apiBase;
       const method = propertyId ? "PUT" : "POST";
       const res = await fetch(url, {
         method,
@@ -141,7 +163,7 @@ export function PropertyForm({
       if (!res.ok || !json.success) {
         throw new Error(json.error || "Failed to save");
       }
-      router.push("/dashboard/builder/properties");
+      router.push(redirectPath);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -164,6 +186,26 @@ export function PropertyForm({
 
       {/* Basic info */}
       <Section title="Basic Information">
+        {mode === "admin" && (
+          <div>
+            <Label required>Builder</Label>
+            <select
+              value={builderId}
+              onChange={(e) => setBuilderId(e.target.value)}
+              className={cn(inputClass, !builderId && error && "border-red-300")}
+            >
+              <option value="">Select a builder</option>
+              {builders.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-slate-500">
+              The property will be listed under this builder&apos;s profile.
+            </p>
+          </div>
+        )}
         <div>
           <Label required>Property Title</Label>
           <input

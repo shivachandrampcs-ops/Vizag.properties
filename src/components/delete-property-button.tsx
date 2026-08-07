@@ -4,7 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
 
-export function DeletePropertyButton({ id }: { id: number }) {
+export function DeletePropertyButton({
+  id,
+  apiPath,
+}: {
+  id: number;
+  /** Overrides the default builder-scoped delete endpoint, e.g. for admin use. */
+  apiPath?: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -12,7 +19,7 @@ export function DeletePropertyButton({ id }: { id: number }) {
     if (!confirm("Are you sure you want to delete this property? This cannot be undone.")) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/builder/properties/${id}`, {
+      const res = await fetch(apiPath ?? `/api/builder/properties/${id}`, {
         method: "DELETE",
       });
       const json = await res.json();

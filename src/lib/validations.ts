@@ -74,6 +74,12 @@ export const propertySchema = z.object({
 
 export type PropertyInput = z.infer<typeof propertySchema>;
 
+export const adminPropertySchema = propertySchema.extend({
+  builderId: z.coerce.number().int().positive("Please select a builder"),
+});
+
+export type AdminPropertyInput = z.infer<typeof adminPropertySchema>;
+
 export const builderProfileSchema = z.object({
   name: z.string().min(2).max(200),
   phone: z.string().min(10).max(20),
