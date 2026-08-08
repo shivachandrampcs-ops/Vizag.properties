@@ -155,7 +155,7 @@ export default async function PropertiesPage({
       </section>
 
       {/* Search */}
-      <section className="sticky top-[112px] z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 py-4">
+      <section className="static md:sticky md:top-[112px] z-30 bg-white/95 md:backdrop-blur-md border-b border-slate-200 py-4">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <PropertySearchBar
             variant="inline"
