@@ -22,8 +22,8 @@
  *      later `npm run db:migrate` sees a fully consistent journal.
  *
  * Nothing is ever dropped, truncated or reset. All migration files applied here
- * are additive (CREATE TYPE IF NOT EXISTS-style guards / ADD COLUMN / CREATE
- * INDEX / idempotent back-fill) - see drizzle/0001_self_service_listing.sql.
+ * are additive (CREATE TYPE / ADD COLUMN / ADD CONSTRAINT / CREATE INDEX /
+ * idempotent back-fill) - see drizzle/0001_self_service_listing.sql.
  *
  * Usage
  * -----
@@ -38,10 +38,17 @@
  *   npm run db:migrate:existing            # dry run
  *   npm run db:migrate:existing -- --apply # apply
  *
+ * Build-time use: `npm run build` runs this with --apply, so a deployment
+ * migrates whatever database DATABASE_URL points at before Next.js is built.
+ * If DATABASE_URL is unset the script logs a warning and exits 0 (local builds
+ * without a database keep working); if it is set but unreachable the build
+ * fails loudly instead of shipping a broken deployment.
+ *
  * Exit codes: 0 = schema up to date / repaired, 1 = error (nothing half-applied:
  * each migration runs inside a transaction when the server supports it).
  */
 
+import "dotenv/config";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";

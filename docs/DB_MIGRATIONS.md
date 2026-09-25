@@ -83,7 +83,40 @@ schema-drift check: it exits non-zero if a required column is missing.
 
 ---
 
-## 4. Verified locally (2026-09-25)
+## 4. Deployments apply migrations automatically
+
+`package.json`:
+
+```json
+"build": "node scripts/db/migrate-existing-db.mjs --apply && next build",
+"db:migrate:existing": "node scripts/db/migrate-existing-db.mjs"
+```
+
+Every Vercel build therefore runs against whatever `DATABASE_URL` that
+environment is wired to, *before* Next.js is built (pages query the database at
+build time), and:
+
+* `DATABASE_URL` unset → the script logs a warning and exits `0`, so local
+  builds without a database still work;
+* `DATABASE_URL` set but unreachable / migration fails → non-zero exit, the
+  build stops, and a broken deployment is never published;
+* everything already applied → "nothing to do", ~1 s, build continues.
+
+Prerequisite: `DATABASE_URL` must be defined for the Vercel environment
+(Production *and* Preview). If it is missing there, the script skips, the build
+still succeeds and the app will fail at runtime exactly as it did before — check
+Vercel → Project → Settings → Environment Variables in that case.
+
+The one-off equivalent, if you ever need to migrate by hand:
+
+```bash
+DATABASE_URL='postgres://…' npm run db:migrate:existing          # report only
+DATABASE_URL='postgres://…' npm run db:migrate:existing -- --apply
+```
+
+---
+
+## 5. Verified locally (2026-09-25)
 
 Reproduced the production state on a scratch Postgres instance and validated
 the repair path:
@@ -100,3 +133,9 @@ The app was then run against the repaired database: homepage and
 `pending_review` / `rejected` listings return the not-found page, the sitemap
 lists approved slugs only, and the full submit → reject (with reason) → approve
 → publicly visible lifecycle works.
+
+Finally the build hook itself was exercised end-to-end on a fresh scratch
+database created with `drizzle-kit push`: `npm run build` ran the repair script
+first (recorded `0000`, applied `0001`, row counts unchanged, legacy listing
+back-filled to `approved` + `published_at`), and a following `npm run db:migrate`
+was a clean no-op.
