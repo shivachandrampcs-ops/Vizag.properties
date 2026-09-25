@@ -10,6 +10,7 @@
     "set-credentials": "node scripts/set-credentials.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:existing": "node scripts/db/migrate-existing-db.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
