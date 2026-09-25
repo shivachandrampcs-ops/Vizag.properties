@@ -1,19 +1,18 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { getDashboardStats, getAllLeads, getAllBuilders } from "@/lib/queries";
+import Link from "next/link";
 import {
   DashboardShell,
   adminNavItems,
 } from "@/components/dashboard-shell";
+import { requireAdminPage } from "@/lib/page-guards";
+import { getDashboardStats, getAllLeads, getAllAccounts } from "@/lib/queries";
 import {
   Building2,
   Users,
   Home,
   Sparkles,
   ArrowRight,
-  TrendingUp,
+  ShieldCheck,
 } from "lucide-react";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -23,35 +22,32 @@ export const metadata = {
 };
 
 export default async function AdminDashboard() {
-  const session = await getSession();
-  if (!session || session.role !== "admin") {
-    redirect("/login/admin");
-  }
+  const { session } = await requireAdminPage();
 
-  const [stats, leads, builders] = await Promise.all([
+  const [stats, leads, accounts] = await Promise.all([
     getDashboardStats(),
     getAllLeads(),
-    getAllBuilders(),
+    getAllAccounts(),
   ]);
 
   const statsCards = [
     {
-      label: "Total Properties",
+      label: "Live Properties",
       value: stats.totalProperties,
       icon: Home,
       color: "from-brand-500 to-brand-700",
     },
     {
-      label: "Active Builders",
-      value: stats.totalBuilders,
-      icon: Building2,
-      color: "from-green-500 to-green-700",
+      label: "Pending Approvals",
+      value: stats.pendingApprovals,
+      icon: ShieldCheck,
+      color: "from-amber-500 to-amber-700",
     },
     {
       label: "Total Leads",
       value: stats.totalLeads,
       icon: Users,
-      color: "from-amber-500 to-amber-700",
+      color: "from-green-500 to-green-700",
     },
     {
       label: "New Leads",
@@ -66,14 +62,13 @@ export default async function AdminDashboard() {
       title="Admin Dashboard"
       user={{ name: session.name, email: session.email, role: "Admin" }}
       navItems={adminNavItems}
+      pendingApprovals={stats.pendingApprovals}
     >
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
           Dashboard Overview
         </h1>
-        <p className="mt-1 text-slate-600">
-          Vizag Properties admin panel
-        </p>
+        <p className="mt-1 text-slate-600">Vizag Properties admin panel</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -98,34 +93,48 @@ export default async function AdminDashboard() {
         })}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 mb-8">
+      <div className="grid md:grid-cols-3 gap-4 mb-8">
         <Link
-          href="/dashboard/admin/leads"
+          href="/dashboard/admin/approvals"
           className="group p-5 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white hover:shadow-xl transition-all"
         >
-          <Users className="h-7 w-7" />
-          <h3 className="mt-3 text-lg font-bold">Manage Leads</h3>
+          <ShieldCheck className="h-7 w-7" />
+          <h3 className="mt-3 text-lg font-bold">Property Approvals</h3>
           <p className="mt-1 text-sm text-amber-100">
-            View and update all customer enquiries
+            {stats.pendingApprovals} waiting for review
           </p>
           <div className="mt-3 text-sm font-semibold flex items-center gap-1">
+            Review now
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
+        <Link
+          href="/dashboard/admin/leads"
+          className="group p-5 rounded-2xl bg-white border border-slate-200 hover:shadow-xl transition-all"
+        >
+          <Users className="h-7 w-7 text-amber-600" />
+          <h3 className="mt-3 text-lg font-bold text-slate-900">Manage Leads</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            {stats.newLeads} new enquiries
+          </p>
+          <div className="mt-3 text-sm font-semibold text-brand-600 flex items-center gap-1">
             View All
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
         <Link
-          href="/dashboard/admin/builders"
+          href="/dashboard/admin/users"
           className="group p-5 rounded-2xl bg-white border border-slate-200 hover:shadow-xl transition-all"
         >
           <Building2 className="h-7 w-7 text-brand-600" />
           <h3 className="mt-3 text-lg font-bold text-slate-900">
-            Manage Builders
+            Users &amp; Verification
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            {builders.length} builders registered
+            {accounts.length} accounts registered
           </p>
           <div className="mt-3 text-sm font-semibold text-brand-600 flex items-center gap-1">
-            View Builders
+            Manage Users
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
@@ -142,7 +151,7 @@ export default async function AdminDashboard() {
           </Link>
         </div>
         <div className="divide-y divide-slate-100">
-          {leads.slice(0, 5).map(({ lead, property, builder }) => (
+          {leads.slice(0, 5).map(({ lead, property }) => (
             <div key={lead.id} className="p-4 hover:bg-slate-50">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div>
@@ -172,6 +181,11 @@ export default async function AdminDashboard() {
               )}
             </div>
           ))}
+          {leads.length === 0 && (
+            <div className="p-10 text-center text-slate-500 text-sm">
+              No leads yet.
+            </div>
+          )}
         </div>
       </div>
     </DashboardShell>

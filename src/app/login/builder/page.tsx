@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { BuilderLoginForm } from "@/components/builder-login-form";
-import { getSession } from "@/lib/auth";
+import { getCurrentAccount, getSession } from "@/lib/auth";
 import { SITE_CONFIG } from "@/lib/utils";
 import Link from "next/link";
 import { Home, ArrowLeft, Building2 } from "lucide-react";
@@ -19,11 +19,14 @@ export const metadata: Metadata = {
 
 export default async function BuilderLoginPage() {
   const session = await getSession();
-  if (session?.role === "builder") {
-    redirect("/dashboard/builder");
-  }
   if (session?.role === "admin") {
     redirect("/dashboard/admin");
+  }
+  if (session?.role === "builder") {
+    // Only redirect when the account exists and is still active, otherwise a
+    // deactivated seller would bounce between /login and the dashboard.
+    const account = await getCurrentAccount();
+    if (account) redirect("/dashboard/seller");
   }
 
   return (
@@ -61,6 +64,15 @@ export default async function BuilderLoginPage() {
           </div>
         </div>
         <p className="mt-6 text-center text-sm text-slate-600">
+          New here?{" "}
+          <Link
+            href="/list-your-property"
+            className="font-semibold text-brand-600 hover:text-brand-700"
+          >
+            List your property
+          </Link>
+        </p>
+        <p className="mt-2 text-center text-sm text-slate-600">
           Are you an admin?{" "}
           <Link
             href="/login/admin"

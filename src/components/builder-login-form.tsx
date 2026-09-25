@@ -8,7 +8,12 @@ import { Mail, Lock, Loader2, AlertCircle, LogIn } from "lucide-react";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
-export function BuilderLoginForm() {
+export function BuilderLoginForm({
+  redirectTo = "/dashboard/seller",
+}: {
+  /** Where to land after a successful login (builders, owners and agents share one dashboard). */
+  redirectTo?: string;
+} = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +39,7 @@ export function BuilderLoginForm() {
       if (!res.ok || !json.success) {
         throw new Error(json.error || "Invalid credentials");
       }
-      router.push("/dashboard/builder");
+      router.push(redirectTo);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

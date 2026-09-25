@@ -36,6 +36,10 @@ import {
   furnishingLabel,
   SITE_CONFIG,
 } from "@/lib/utils";
+import {
+  publisherTypeChipClass,
+  publisherTypeLabel,
+} from "@/lib/publishers";
 import { PropertyMapWrapper } from "@/components/property-map-wrapper";
 import { LeadForm } from "@/components/lead-form";
 import { PropertyCard } from "@/components/property-card";
@@ -63,6 +67,7 @@ export async function generateMetadata({
   return {
     title,
     description,
+    robots: { index: true, follow: true },
     keywords: [
       `${propertyTypeLabel(property.propertyType)} in ${property.location}`,
       `Property in ${property.location} Vizag`,
@@ -403,6 +408,12 @@ export default async function PropertyDetailsPage({
                   {property.reraId && (
                     <DetailRow label="RERA ID" value={property.reraId} />
                   )}
+                  {property.approvalInfo && (
+                    <DetailRow
+                      label="Approvals"
+                      value={property.approvalInfo}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -467,17 +478,17 @@ export default async function PropertyDetailsPage({
                 </div>
               )}
 
-              {/* Builder Info */}
+              {/* Seller Info — builder / owner / agent */}
               <div className="rounded-2xl bg-white border border-slate-200 p-6">
                 <h2 className="text-2xl font-bold text-slate-900">
-                  About the Builder
+                  Listed by
                 </h2>
                 <div className="mt-4 flex flex-col sm:flex-row gap-4">
-                  {property.builder.logo && (
+                  {property.seller.logo && (
                     <div className="flex-shrink-0">
                       <Image
-                        src={property.builder.logo}
-                        alt={property.builder.name}
+                        src={property.seller.logo}
+                        alt={property.seller.name}
                         width={80}
                         height={80}
                         className="h-20 w-20 rounded-xl object-cover"
@@ -485,32 +496,75 @@ export default async function PropertyDetailsPage({
                     </div>
                   )}
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-lg font-bold text-slate-900">
-                        {property.builder.name}
+                        {property.seller.companyName || property.seller.name}
                       </h3>
-                      {property.builder.projectsCount &&
-                        property.builder.projectsCount > 0 && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 flex items-center gap-1">
-                            <Award className="h-3 w-3" />
-                            Verified
-                          </span>
-                        )}
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-                      {property.builder.experienceYears && (
-                        <span>
-                          🏗️ {property.builder.experienceYears}+ years
-                          experience
+                      <span
+                        className={`px-2 py-0.5 text-xs font-semibold rounded-full ${publisherTypeChipClass(
+                          property.seller.publisherType
+                        )}`}
+                      >
+                        {publisherTypeLabel(property.seller.publisherType)}
+                      </span>
+                      {/* Only shown when an admin has actually verified the account. */}
+                      {property.seller.isVerified && (
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 flex items-center gap-1">
+                          <Award className="h-3 w-3" />
+                          Verified
                         </span>
                       )}
-                      {property.builder.projectsCount && (
-                        <span>🏢 {property.builder.projectsCount} projects</span>
+                    </div>
+                    {property.seller.companyName && (
+                      <div className="mt-0.5 text-sm text-slate-600">
+                        Contact: {property.seller.name}
+                      </div>
+                    )}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+                      {property.seller.experienceYears ? (
+                        <span>
+                          🏗️ {property.seller.experienceYears}+ years
+                          experience
+                        </span>
+                      ) : null}
+                      {property.seller.projectsCount ? (
+                        <span>
+                          🏢 {property.seller.projectsCount} projects
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {property.contactPreference !== "whatsapp" && (
+                        <a
+                          href={`tel:${SITE_CONFIG.phoneRaw}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold"
+                        >
+                          <Phone className="h-3.5 w-3.5" />
+                          Call
+                        </a>
+                      )}
+                      {property.contactPreference !== "call" && (
+                        <a
+                          href={
+                            property.seller.whatsappNumber
+                              ? `https://wa.me/${property.seller.whatsappNumber.replace(
+                                  /\D/g,
+                                  ""
+                                )}`
+                              : SITE_CONFIG.whatsapp
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-semibold"
+                        >
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          WhatsApp
+                        </a>
                       )}
                     </div>
-                    {property.builder.description && (
+                    {property.seller.description && (
                       <p className="mt-3 text-sm text-slate-600 leading-relaxed line-clamp-4">
-                        {property.builder.description}
+                        {property.seller.description}
                       </p>
                     )}
                   </div>
