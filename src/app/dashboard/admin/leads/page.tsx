@@ -1,10 +1,9 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { getAllLeads } from "@/lib/queries";
+import { getAllLeads, getDashboardStats } from "@/lib/queries";
 import {
   DashboardShell,
   adminNavItems,
 } from "@/components/dashboard-shell";
+import { requireAdminPage } from "@/lib/page-guards";
 import { Users, Phone, Mail } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { LeadStatusSelect } from "@/components/lead-status-select";
@@ -17,18 +16,19 @@ export const metadata = {
 };
 
 export default async function AdminLeadsPage() {
-  const session = await getSession();
-  if (!session || session.role !== "admin") {
-    redirect("/login/admin");
-  }
+  const { session } = await requireAdminPage();
 
-  const leads = await getAllLeads();
+  const [leads, stats] = await Promise.all([
+    getAllLeads(),
+    getDashboardStats(),
+  ]);
 
   return (
     <DashboardShell
       title="Admin Dashboard"
       user={{ name: session.name, email: session.email, role: "Admin" }}
       navItems={adminNavItems}
+      pendingApprovals={stats.pendingApprovals}
     >
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-900">

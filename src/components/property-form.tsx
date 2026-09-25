@@ -4,58 +4,102 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { propertySchema, type PropertyInput } from "@/lib/validations";
+import {
+  propertySchema,
+  type PropertyInput,
+} from "@/lib/validations";
 import { VIZAG_LOCATIONS, cn } from "@/lib/utils";
+import { ImageUploader, type UploadedImageValue } from "@/components/image-uploader";
 import {
   Save,
+  Send,
   Loader2,
   AlertCircle,
-  Plus,
-  X as XIcon,
   Image as ImageIcon,
+  ShieldAlert,
 } from "lucide-react";
 
-type PropertyImage = {
+type ExistingImage = {
   id?: number;
   imageUrl: string;
   altText?: string | null;
-  isCover?: boolean;
-  sortOrder?: number;
+  isCover?: boolean | null;
+  sortOrder?: number | null;
+  provider?: string | null;
+  publicId?: string | null;
 };
 
-type BuilderOption = { id: number; name: string };
+type AccountOption = { id: number; name: string; publisherType?: string | null };
 
+/**
+ * Single property form shared by the seller dashboard and the admin dashboard
+ * (and previously by the builder dashboard) — there is intentionally only one
+ * implementation of property CRUD UI in the project.
+ */
 export function PropertyForm({
   initial,
   propertyId,
   existingImages = [],
-  mode = "builder",
-  builders = [],
+  mode = "seller",
+  accounts = [],
+  builders,
+  initialAccountId,
   initialBuilderId,
+  rejectionReason,
+  moderationStatus,
+  apiBase,
+  redirectPath,
 }: {
   initial?: Partial<PropertyInput>;
   propertyId?: number;
-  existingImages?: PropertyImage[];
-  /** "builder" (default): builder manages their own properties.
-   *  "admin": admin manages any property and must choose which builder it belongs to. */
-  mode?: "builder" | "admin";
-  /** Only used when mode="admin" — list of builders to assign the property to. */
-  builders?: BuilderOption[];
-  /** Only used when mode="admin" — preselects the builder when editing an existing property. */
+  existingImages?: ExistingImage[];
+  /** "seller" (default): the signed-in seller manages their own property.
+   *  "admin": admin manages any property and picks the owning account. */
+  mode?: "seller" | "builder" | "admin";
+  /** Accounts the admin can assign the property to. */
+  accounts?: AccountOption[];
+  /** Deprecated alias of `accounts` (kept for older call sites). */
+  builders?: AccountOption[];
+  initialAccountId?: number;
+  /** Deprecated alias of `initialAccountId`. */
   initialBuilderId?: number;
+  /** Shown when the admin rejected this listing. */
+  rejectionReason?: string | null;
+  moderationStatus?: string;
+  apiBase?: string;
+  redirectPath?: string;
 }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const isAdmin = mode === "admin";
+  const [loading, setLoading] = useState<"" | "draft" | "submit">("");
   const [error, setError] = useState("");
-  const [imageInput, setImageInput] = useState("");
-  const [images, setImages] = useState<PropertyImage[]>(existingImages);
-  const [builderId, setBuilderId] = useState<string>(
-    initialBuilderId ? String(initialBuilderId) : ""
+  const [images, setImages] = useState<UploadedImageValue[]>(
+    existingImages.map((img, i) => ({
+      key: img.id ? `db-${img.id}` : `url-${i}-${img.imageUrl}`,
+      imageUrl: img.imageUrl,
+      altText: img.altText ?? null,
+      isCover: img.isCover ?? i === 0,
+      sortOrder: img.sortOrder ?? i,
+      provider: img.provider ?? "url",
+      publicId: img.publicId ?? null,
+    }))
+  );
+  const [accountId, setAccountId] = useState<string>(
+    String(
+      initialAccountId ??
+        initialBuilderId ??
+        (builders?.[0]?.id ?? accounts?.[0]?.id ?? "") ??
+        ""
+    )
   );
 
-  const apiBase = mode === "admin" ? "/api/admin/properties" : "/api/builder/properties";
-  const redirectPath =
-    mode === "admin" ? "/dashboard/admin/properties" : "/dashboard/builder/properties";
+  const accountOptions = accounts.length ? accounts : (builders ?? []);
+
+  const resolvedApiBase =
+    apiBase ?? (isAdmin ? "/api/admin/properties" : "/api/seller/properties");
+  const resolvedRedirectPath =
+    redirectPath ??
+    (isAdmin ? "/dashboard/admin/properties" : "/dashboard/seller/properties");
 
   const {
     register,
@@ -66,9 +110,10 @@ export function PropertyForm({
     defaultValues: {
       title: initial?.title ?? "",
       description: initial?.description ?? "",
-      propertyType: (initial?.propertyType as any) ?? "apartment",
-      status: (initial?.status as any) ?? "ready_to_move",
-      furnishing: (initial?.furnishing as any) ?? "unfurnished",
+      propertyType: (initial?.propertyType as PropertyInput["propertyType"]) ?? "apartment",
+      status: (initial?.status as PropertyInput["status"]) ?? "ready_to_move",
+      furnishing:
+        (initial?.furnishing as PropertyInput["furnishing"]) ?? "unfurnished",
       price: initial?.price ?? 0,
       pricePerSqft: initial?.pricePerSqft ?? undefined,
       area: initial?.area ?? 0,
@@ -86,73 +131,65 @@ export function PropertyForm({
       latitude: initial?.latitude ?? "",
       longitude: initial?.longitude ?? "",
       reraId: initial?.reraId ?? "",
+      approvalInfo: (initial as { approvalInfo?: string } | undefined)
+        ?.approvalInfo ?? "",
+      contactPreference:
+        (initial as { contactPreference?: "call" | "whatsapp" | "both" } | undefined)
+          ?.contactPreference ?? "both",
       isFeatured: initial?.isFeatured ?? false,
       amenities: initial?.amenities ?? "",
       highlights: initial?.highlights ?? "",
-    } as any,
+    } as never,
   });
 
-  function addImage() {
-    const url = imageInput.trim();
-    if (!url) return;
-    setImages((prev) => [
-      ...prev,
-      { imageUrl: url, isCover: prev.length === 0, sortOrder: prev.length },
-    ]);
-    setImageInput("");
-  }
-
-  function removeImage(idx: number) {
-    setImages((prev) => {
-      const next = prev.filter((_, i) => i !== idx);
-      if (next.length > 0 && prev[idx].isCover) {
-        next[0].isCover = true;
-      }
-      return next;
-    });
-  }
-
-  function setCover(idx: number) {
-    setImages((prev) =>
-      prev.map((img, i) => ({ ...img, isCover: i === idx }))
-    );
-  }
-
-  async function onSubmit(data: any) {
+  async function onSubmit(data: Record<string, unknown>, intent: "draft" | "submit") {
     if (images.length === 0) {
-      setError("Please add at least one image");
+      setError("Please upload at least one property photo.");
       return;
     }
-    if (mode === "admin" && !builderId) {
-      setError("Please select a builder for this property");
+    if (images.some((i) => i.uploading)) {
+      setError("Please wait for all images to finish uploading.");
       return;
     }
-    setLoading(true);
+    if (isAdmin && !accountId) {
+      setError("Please select the account this property belongs to.");
+      return;
+    }
+
+    setLoading(intent);
     setError("");
     try {
       const payload = {
         ...data,
-        ...(mode === "admin" ? { builderId: Number(builderId) } : {}),
+        intent,
+        ...(isAdmin ? { builderId: Number(accountId) } : {}),
         amenities: data.amenities
-          ? (data.amenities as string)
+          ? String(data.amenities)
               .split(",")
               .map((s: string) => s.trim())
               .filter(Boolean)
           : [],
         highlights: data.highlights
-          ? (data.highlights as string)
+          ? String(data.highlights)
               .split(",")
               .map((s: string) => s.trim())
               .filter(Boolean)
           : [],
         images: images.map((img, i) => ({
           imageUrl: img.imageUrl,
-          altText: data.title,
+          altText: data.title ?? "",
           isCover: img.isCover ?? i === 0,
           sortOrder: i,
+          provider: img.provider ?? "url",
+          publicId: img.publicId ?? null,
+          width: img.width ?? null,
+          height: img.height ?? null,
+          bytes: img.bytes ?? null,
+          format: img.format ?? null,
         })),
       };
-      const url = propertyId ? `${apiBase}/${propertyId}` : apiBase;
+
+      const url = propertyId ? `${resolvedApiBase}/${propertyId}` : resolvedApiBase;
       const method = propertyId ? "PUT" : "POST";
       const res = await fetch(url, {
         method,
@@ -161,22 +198,30 @@ export function PropertyForm({
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Failed to save");
+        throw new Error(json.error || "Failed to save the property");
       }
-      router.push(redirectPath);
+      router.push(resolvedRedirectPath);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
-      setLoading(false);
+      setLoading("");
     }
   }
 
   const inputClass =
     "w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors";
 
+  const busy = loading !== "";
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSubmit((data) => onSubmit(data as Record<string, unknown>, "submit"))(e);
+      }}
+      className="space-y-6"
+    >
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 p-3 flex items-start gap-2">
           <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
@@ -184,25 +229,42 @@ export function PropertyForm({
         </div>
       )}
 
+      {!isAdmin && moderationStatus === "rejected" && rejectionReason && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-2">
+          <ShieldAlert className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-red-800">
+              This property was rejected
+            </p>
+            <p className="mt-0.5 text-sm text-red-700">{rejectionReason}</p>
+            <p className="mt-1 text-xs text-red-600">
+              Update the listing and press “Submit for Review” to send it back
+              to the admin team.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Basic info */}
       <Section title="Basic Information">
-        {mode === "admin" && (
+        {isAdmin && (
           <div>
-            <Label required>Builder</Label>
+            <Label required>Listed by (account)</Label>
             <select
-              value={builderId}
-              onChange={(e) => setBuilderId(e.target.value)}
-              className={cn(inputClass, !builderId && error && "border-red-300")}
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className={inputClass}
             >
-              <option value="">Select a builder</option>
-              {builders.map((b) => (
+              <option value="">Select an account</option>
+              {accountOptions.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
+                  {b.publisherType ? ` (${b.publisherType})` : ""}
                 </option>
               ))}
             </select>
             <p className="mt-1.5 text-xs text-slate-500">
-              The property will be listed under this builder&apos;s profile.
+              The property will be listed under this builder, owner or agent.
             </p>
           </div>
         )}
@@ -247,7 +309,7 @@ export function PropertyForm({
             </select>
           </div>
           <div>
-            <Label required>Status</Label>
+            <Label required>Property Status</Label>
             <select {...register("status")} className={inputClass}>
               <option value="ready_to_move">Ready to Move</option>
               <option value="under_construction">Under Construction</option>
@@ -406,19 +468,11 @@ export function PropertyForm({
           </div>
           <div>
             <Label>City</Label>
-            <input
-              type="text"
-              {...register("city")}
-              className={inputClass}
-            />
+            <input type="text" {...register("city")} className={inputClass} />
           </div>
           <div>
             <Label>State</Label>
-            <input
-              type="text"
-              {...register("state")}
-              className={inputClass}
-            />
+            <input type="text" {...register("state")} className={inputClass} />
           </div>
           <div>
             <Label>Pincode</Label>
@@ -447,6 +501,38 @@ export function PropertyForm({
               placeholder="83.3350"
             />
           </div>
+          <div className="sm:col-span-2">
+            <Label>Google Maps link / embed</Label>
+            <input
+              type="text"
+              className={inputClass}
+              placeholder="https://maps.google.com/?q=17.7385,83.3350"
+              onChange={(e) => {
+                // Convenience: extract lat/lng from a pasted Google Maps link.
+                const match = e.target.value.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+                if (match) {
+                  const latInput = document.querySelector<HTMLInputElement>(
+                    'input[name="latitude"]'
+                  );
+                  const lngInput = document.querySelector<HTMLInputElement>(
+                    'input[name="longitude"]'
+                  );
+                  if (latInput) latInput.value = match[1];
+                  if (lngInput) lngInput.value = match[2];
+                }
+              }}
+            />
+            <p className="mt-1.5 text-xs text-slate-500">
+              Optional helper — pasting a map link fills the latitude and
+              longitude fields above.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* Legal */}
+      <Section title="Legal & Approvals">
+        <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label>RERA ID</Label>
             <input
@@ -456,17 +542,14 @@ export function PropertyForm({
               placeholder="APRERA/REG/2024/001234"
             />
           </div>
-          <div className="flex items-end">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                {...register("isFeatured")}
-                className="h-4 w-4 rounded text-brand-600 focus:ring-brand-500"
-              />
-              <span className="text-sm font-medium text-slate-700">
-                Mark as Featured
-              </span>
-            </label>
+          <div>
+            <Label>Approval information</Label>
+            <input
+              type="text"
+              {...register("approvalInfo")}
+              className={inputClass}
+              placeholder="e.g. DTCP approved, Bank loan approved"
+            />
           </div>
         </div>
       </Section>
@@ -493,90 +576,61 @@ export function PropertyForm({
         </div>
       </Section>
 
-      {/* Images */}
-      <Section title="Property Images">
-        <div>
-          <Label>Add Image URL</Label>
-          <div className="flex gap-2">
-            <input
-              type="url"
-              value={imageInput}
-              onChange={(e) => setImageInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addImage();
-                }
-              }}
-              className={inputClass}
-              placeholder="https://example.com/image.jpg"
-            />
-            <button
-              type="button"
-              onClick={addImage}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700"
+      {/* Contact preference */}
+      <Section title="Contact Preference">
+        <div className="grid sm:grid-cols-3 gap-3">
+          {(
+            [
+              { value: "both", label: "Call & WhatsApp" },
+              { value: "call", label: "Phone call only" },
+              { value: "whatsapp", label: "WhatsApp only" },
+            ] as const
+          ).map((option) => (
+            <label
+              key={option.value}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 p-3 cursor-pointer hover:bg-slate-50"
             >
-              <Plus className="h-4 w-4" />
-              Add
-            </button>
-          </div>
-          <p className="mt-1.5 text-xs text-slate-500">
-            Add image URLs (you can use Unsplash, your CDN, etc.). The first
-            image will be the cover by default.
-          </p>
+              <input
+                type="radio"
+                value={option.value}
+                {...register("contactPreference")}
+                className="h-4 w-4 text-brand-600 focus:ring-brand-500"
+              />
+              <span className="text-sm font-medium text-slate-700">
+                {option.label}
+              </span>
+            </label>
+          ))}
         </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            {...register("isFeatured")}
+            className="h-4 w-4 rounded text-brand-600 focus:ring-brand-500"
+          />
+          <span className="text-sm font-medium text-slate-700">
+            Mark as Featured
+          </span>
+        </label>
+      </Section>
 
-        {images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {images.map((img, i) => (
-              <div
-                key={i}
-                className="relative aspect-[4/3] rounded-lg overflow-hidden border-2 border-slate-200 group"
-              >
-                <img
-                  src={img.imageUrl}
-                  alt={`Image ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/60 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={() => setCover(i)}
-                    className={`px-2 py-1 rounded text-xs font-semibold ${
-                      img.isCover
-                        ? "bg-gold-500 text-white"
-                        : "bg-white text-slate-700"
-                    }`}
-                  >
-                    {img.isCover ? "✓ Cover" : "Set Cover"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="p-1.5 rounded bg-red-500 text-white"
-                  >
-                    <XIcon className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                {img.isCover && (
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-gold-500 text-white text-[10px] font-bold">
-                    COVER
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
+      {/* Images */}
+      <Section title="Property Photos">
+        <ImageUploader
+          value={images}
+          onChange={setImages}
+          disabled={busy}
+          hint="Upload at least one photo. Drag tiles to reorder, tap the star to set the cover photo."
+        />
         {images.length === 0 && (
-          <div className="rounded-lg border-2 border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-            <ImageIcon className="h-8 w-8 mx-auto text-slate-400 mb-2" />
-            No images added yet. Add image URLs above.
+          <div className="rounded-lg border-2 border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+            <ImageIcon className="h-7 w-7 mx-auto text-slate-400 mb-2" />
+            No photos yet — add the first one to make your listing stand out.
           </div>
         )}
       </Section>
 
-      <div className="flex items-center justify-end gap-3 sticky bottom-0 bg-white py-4 border-t border-slate-200 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sticky bottom-0 bg-white py-4 border-t border-slate-200 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
         <button
           type="button"
           onClick={() => router.back()}
@@ -584,20 +638,48 @@ export function PropertyForm({
         >
           Cancel
         </button>
+
+        {!isAdmin && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={handleSubmit((data) =>
+              onSubmit(data as Record<string, unknown>, "draft")
+            )}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            {loading === "draft" ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save as Draft
+              </>
+            )}
+          </button>
+        )}
+
         <button
           type="submit"
-          disabled={loading}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold disabled:opacity-60"
+          disabled={busy}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold disabled:opacity-60"
         >
-          {loading ? (
+          {loading === "submit" ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
+              Submitting...
             </>
           ) : (
             <>
-              <Save className="h-4 w-4" />
-              {propertyId ? "Update Property" : "Create Property"}
+              <Send className="h-4 w-4" />
+              {isAdmin
+                ? propertyId
+                  ? "Update Property"
+                  : "Create Property"
+                : "Submit for Review"}
             </>
           )}
         </button>

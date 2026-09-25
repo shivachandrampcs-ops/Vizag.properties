@@ -3,7 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Phone, Home, Building2, Info, Mail, LogIn, ChevronDown } from "lucide-react";
+import {
+  Menu,
+  X,
+  Phone,
+  Home,
+  Building2,
+  Info,
+  Mail,
+  LogIn,
+  ChevronDown,
+  PlusCircle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, SITE_CONFIG } from "@/lib/utils";
 
@@ -15,7 +26,7 @@ const navItems = [
 ];
 
 const loginItems = [
-  { href: "/login/builder", label: "Builder Login" },
+  { href: "/login", label: "Seller Login (Builder / Owner / Agent)" },
   { href: "/login/admin", label: "Admin Login" },
 ];
 
@@ -159,6 +170,13 @@ export function Navbar() {
 
           {/* CTA */}
           <div className="hidden lg:flex items-center gap-2">
+            <Link
+              href="/list-your-property"
+              className="px-4 py-2.5 text-sm font-semibold rounded-lg bg-gold-500 text-white hover:bg-gold-600 transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <PlusCircle className="h-4 w-4" />
+              List Your Property
+            </Link>
             <a
               href={`tel:${SITE_CONFIG.phoneRaw}`}
               className="px-4 py-2.5 text-sm font-semibold rounded-lg border-2 border-brand-600 text-brand-700 hover:bg-brand-50 transition-colors flex items-center gap-2"
@@ -227,6 +245,13 @@ export function Navbar() {
                   </Link>
                 ))}
               </div>
+              <Link
+                href="/list-your-property"
+                className="mt-2 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg bg-gold-500 text-white"
+              >
+                <PlusCircle className="h-4 w-4" />
+                List Your Property
+              </Link>
               <a
                 href={`tel:${SITE_CONFIG.phoneRaw}`}
                 className="mt-2 flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg bg-brand-600 text-white"

@@ -15,6 +15,7 @@ import {
   Phone,
   MessageCircle,
   Home,
+  Building2,
   Sparkles,
   CheckCircle,
   MapPin,
@@ -575,6 +576,69 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ────────── LIST YOUR PROPERTY CTA ────────── */}
+      <section className="py-14 md:py-20 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 p-8 md:p-12">
+            <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-gold-500/20 blur-3xl" />
+            <div className="relative grid lg:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-gold-400">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Free for owners, builders &amp; agents
+                </div>
+                <h2 className="mt-4 text-2xl md:text-4xl font-bold text-white">
+                  Sell or rent your property faster in Vizag
+                </h2>
+                <p className="mt-3 text-slate-200 max-w-xl">
+                  Register as a builder, property owner or real estate agent,
+                  upload photos and reach genuine buyers across Visakhapatnam.
+                  Our team reviews every listing before it goes live.
+                </p>
+                <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/list-your-property"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold"
+                  >
+                    List Your Property
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/30 text-white text-sm font-semibold hover:bg-white/10"
+                  >
+                    Already registered? Log in
+                  </Link>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {(
+                  [
+                    { label: "Builders", icon: Building2 },
+                    { label: "Owners", icon: Home },
+                    { label: "Agents", icon: Key },
+                  ] as const
+                ).map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.label}
+                      href="/list-your-property"
+                      className="rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 p-4 text-center transition-colors"
+                    >
+                      <Icon className="h-6 w-6 text-gold-400 mx-auto" />
+                      <div className="mt-2 text-sm font-semibold text-white">
+                        {item.label}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ────────── FAQ ────────── */}
       <section className="py-16 md:py-24 section-gradient">

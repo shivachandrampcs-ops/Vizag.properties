@@ -53,6 +53,13 @@ Update your `.env` file with:
 ```
 DATABASE_URL=postgresql://postgres_app:CHANGE_THIS_STRONG_PASSWORD@127.0.0.1:5432/app_db
 AUTH_SECRET=generate-a-random-64-char-string-here
+
+# Image uploads (Cloudinary - see section 3.1)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+CLOUDINARY_UPLOAD_FOLDER=vizag-properties
+UPLOAD_PROVIDER=cloudinary
 ```
 
 ## 3. Application Setup
@@ -71,16 +78,40 @@ npm install
 
 # Create .env file
 cp .env.example .env
-nano .env  # Fill in DATABASE_URL and AUTH_SECRET
+nano .env  # Fill in DATABASE_URL, AUTH_SECRET and the CLOUDINARY_* values
 
 # Build the application
 npm run build
 
-# Apply database schema
-npx drizzle-kit push
+# Apply database schema (additive migration - no data is dropped)
+npm run db:migrate
 
 # The app auto-seeds on first /api/health hit
 ```
+
+> **Migration note:** `npm run db:migrate` applies the SQL files in `drizzle/`
+> (including `0001_self_service_listing.sql`, which ADDs the new moderation and
+> account-type columns and back-fills existing rows as approved builders).
+> `npx drizzle-kit push` still works if you prefer pushing the schema directly,
+> but prefer the migration so the `__drizzle_migrations` history stays accurate.
+>
+> Drizzle reads its connection string from the environment (`drizzle.config.ts`),
+> so make sure `.env` is filled in BEFORE running any db command.
+
+### 3.1 Cloudinary setup (property photo uploads)
+
+1. Create a free account at https://cloudinary.com
+2. Dashboard → **Product Environment Credentials** → copy Cloud name, API Key, API Secret
+3. Put them in `.env` as `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+4. (Optional) change `CLOUDINARY_UPLOAD_FOLDER` to organise assets
+
+Uploads are **signed server-side** in `/api/uploads/property-images`: the API
+secret never leaves the VPS and is never exposed to the browser. Nothing is
+written to the app filesystem.
+
+> **Local development without Cloudinary:** set
+> `UPLOAD_PROVIDER=local` **and** `ALLOW_LOCAL_UPLOADS=true`. This writes to
+> `public/uploads` and is automatically refused when `NODE_ENV=production`.
 
 ## 4. PM2 Setup
 
@@ -253,7 +284,7 @@ cd /var/www/vizag-properties
 git pull  # or upload new files
 npm install
 npm run build
-npx drizzle-kit push  # if schema changed
+npm run db:migrate  # if schema changed
 pm2 restart vizag-properties
 
 # Backup database
@@ -271,11 +302,20 @@ After first deployment, the app auto-seeds. Use these credentials:
 - Email: `admin@vizag.properties`
 - Password: `Admin@123`
 
-**Builder Login:**
+**Builder Login (any builder / owner / agent account):**
 - Email: `contact@sravanthi.com`
 - Password: `Builder@123`
 
 ⚠️ **Important:** Change these immediately after first login.
+
+**Public entry points added by the self-service listing feature:**
+- `/list-your-property` – public "List Your Property" landing page
+- `/register?type=builder|owner|agent` – self-service registration
+- `/login` – seller login (builders, owners and agents)
+- `/dashboard/seller/*` – the single seller dashboard (old `/dashboard/builder/*`
+  URLs 308-redirect here and keep working)
+- `/dashboard/admin/approvals` – moderation queue
+- `/dashboard/admin/users` – accounts + verification toggles
 
 ### Recommended: `scripts/set-credentials.js`
 

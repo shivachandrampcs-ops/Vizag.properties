@@ -173,10 +173,18 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/login/builder"
+                  href="/list-your-property"
                   className="text-slate-400 hover:text-gold-400 transition-colors"
                 >
-                  Builder Login
+                  List Your Property
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/login"
+                  className="text-slate-400 hover:text-gold-400 transition-colors"
+                >
+                  Seller Login
                 </Link>
               </li>
               <li>

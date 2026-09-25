@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { db } from "@/db";
 import { properties, builders } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { SITE_CONFIG } from "@/lib/utils";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -41,7 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const allProperties = await db
       .select({ slug: properties.slug, updatedAt: properties.updatedAt })
       .from(properties)
-      .where(eq(properties.isActive, true));
+      .where(
+        and(
+          eq(properties.isActive, true),
+          eq(properties.moderationStatus, "approved")
+        )
+      );
     propertyEntries = allProperties.map((p) => ({
       url: `${baseUrl}/properties/${p.slug}`,
       lastModified: p.updatedAt,

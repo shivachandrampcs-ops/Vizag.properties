@@ -6,7 +6,7 @@ import { getProperties } from "@/lib/queries";
 import { PropertyCard } from "@/components/property-card";
 import { PropertySearchBar } from "@/components/property-search-bar";
 import { LeadForm } from "@/components/lead-form";
-import { Building2, Sparkles } from "lucide-react";
+import { Building2, Sparkles, PlusCircle } from "lucide-react";
 import type { PropertyWithRelations } from "@/lib/utils-types";
 import { SITE_CONFIG } from "@/lib/utils";
 
@@ -151,6 +151,19 @@ export default async function PropertiesPage({
             verified apartments, villas, plots and commercial properties across
             Vizag.
           </p>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Link
+              href="/list-your-property"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold"
+            >
+              <PlusCircle className="h-4 w-4" />
+              List Your Property
+            </Link>
+            <span className="text-xs text-slate-500">
+              Owners, builders and agents — every listing is reviewed before it
+              goes live.
+            </span>
+          </div>
         </div>
       </section>
 

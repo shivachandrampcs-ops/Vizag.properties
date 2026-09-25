@@ -1,4 +1,22 @@
 // Type utilities shared across client and server
+export type SellerSummary = {
+  id: number;
+  name: string;
+  slug: string;
+  email: string;
+  phone: string;
+  whatsappNumber?: string | null;
+  companyName?: string | null;
+  logo: string | null;
+  description: string | null;
+  experienceYears: number | null;
+  projectsCount: number | null;
+  /** builder | owner | agent */
+  publisherType?: string;
+  /** True only when an admin has verified the account. */
+  isVerified?: boolean;
+};
+
 export type PropertyWithRelations = {
   id: number;
   title: string;
@@ -26,28 +44,29 @@ export type PropertyWithRelations = {
   amenities: string[];
   highlights: string[];
   reraId: string | null;
+  approvalInfo?: string | null;
+  contactPreference?: string | null;
   isFeatured: boolean;
   isActive: boolean;
   views: number;
+  moderationStatus?: string;
+  rejectionReason?: string | null;
+  submittedAt?: Date | string | null;
+  publishedAt?: Date | string | null;
+  builderId?: number;
   createdAt: Date | string;
   updatedAt: Date | string;
-  builder: {
-    id: number;
-    name: string;
-    slug: string;
-    email: string;
-    phone: string;
-    logo: string | null;
-    description: string | null;
-    experienceYears: number | null;
-    projectsCount: number | null;
-  };
+  seller: SellerSummary;
+  /** Alias of `seller` for backwards compatibility. */
+  builder: SellerSummary;
   images: {
     id: number;
     imageUrl: string;
     altText: string | null;
     isCover: boolean | null;
     sortOrder: number | null;
+    provider?: string | null;
+    publicId?: string | null;
   }[];
   coverImage: string | null;
 };

@@ -1,15 +1,15 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getSession } from "@/lib/auth";
-import { getProperties } from "@/lib/queries";
 import {
   DashboardShell,
   adminNavItems,
 } from "@/components/dashboard-shell";
+import { requireAdminPage } from "@/lib/page-guards";
+import { getAdminProperties, getDashboardStats } from "@/lib/queries";
 import { Home, ExternalLink, Eye, Plus, Edit } from "lucide-react";
 import { formatPrice, statusLabel } from "@/lib/utils";
 import { DeletePropertyButton } from "@/components/delete-property-button";
+import { ModerationBadge, AccountTypeBadge } from "@/components/moderation-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -19,18 +19,19 @@ export const metadata = {
 };
 
 export default async function AdminPropertiesPage() {
-  const session = await getSession();
-  if (!session || session.role !== "admin") {
-    redirect("/login/admin");
-  }
+  const { session } = await requireAdminPage();
 
-  const allProperties = await getProperties();
+  const [allProperties, stats] = await Promise.all([
+    getAdminProperties(),
+    getDashboardStats(),
+  ]);
 
   return (
     <DashboardShell
       title="Admin Dashboard"
       user={{ name: session.name, email: session.email, role: "Admin" }}
       navItems={adminNavItems}
+      pendingApprovals={stats.pendingApprovals}
     >
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div>
@@ -38,7 +39,7 @@ export default async function AdminPropertiesPage() {
             Manage Properties
           </h1>
           <p className="mt-1 text-slate-600">
-            {allProperties.length} properties listed across Vizag
+            {allProperties.length} properties (all moderation states)
           </p>
         </div>
         <Link
@@ -67,7 +68,7 @@ export default async function AdminPropertiesPage() {
                     Property
                   </th>
                   <th className="text-left p-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Builder
+                    Listed by
                   </th>
                   <th className="text-left p-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Price
@@ -110,21 +111,25 @@ export default async function AdminPropertiesPage() {
                       </div>
                     </td>
                     <td className="p-4 text-sm text-slate-700">
-                      {p.builder.name}
+                      <div>{p.seller.name}</div>
+                      <AccountTypeBadge
+                        type={p.seller.publisherType}
+                        isVerified={p.seller.isVerified}
+                      />
                     </td>
                     <td className="p-4 text-sm font-semibold text-brand-700">
                       {formatPrice(p.price)}
                     </td>
                     <td className="p-4">
-                      <span
-                        className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                          p.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {p.isActive ? statusLabel(p.status) : "Inactive"}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <ModerationBadge
+                          status={p.moderationStatus}
+                          isActive={p.isActive}
+                        />
+                        <span className="text-xs text-slate-500">
+                          {statusLabel(p.status)}
+                        </span>
+                      </div>
                     </td>
                     <td className="p-4 text-sm text-slate-700 flex items-center gap-1">
                       <Eye className="h-3.5 w-3.5 text-slate-400" />
@@ -132,14 +137,16 @@ export default async function AdminPropertiesPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/properties/${p.slug}`}
-                          target="_blank"
-                          className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
-                          title="View"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
+                        {p.moderationStatus === "approved" && p.isActive && (
+                          <Link
+                            href={`/properties/${p.slug}`}
+                            target="_blank"
+                            className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+                            title="View"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        )}
                         <Link
                           href={`/dashboard/admin/properties/${p.id}/edit`}
                           className="p-2 rounded-lg hover:bg-slate-100 text-slate-600"
