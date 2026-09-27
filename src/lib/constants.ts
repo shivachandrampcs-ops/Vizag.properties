@@ -27,3 +27,9 @@ export const MAX_UPLOADS_PER_HOUR = 60;
 
 /** Minimum length of an admin rejection reason. */
 export const MIN_REJECTION_REASON_LENGTH = 5;
+
+/** Maximum number of amenities / highlights accepted on a single listing. */
+export const MAX_LISTING_TAGS = 50;
+
+/** Maximum length of one amenity / highlight entry. */
+export const MAX_LISTING_TAG_LENGTH = 100;

@@ -9,7 +9,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { createPropertySlug } from "./slug";
 import { deleteImage } from "./uploads";
 import { notify } from "./notifications";
-import type { PropertyPayloadInput } from "./validations";
+import { toStringList, type PropertyPayloadInput } from "./validations";
 
 /**
  * Shared property CRUD used by BOTH the seller API (`/api/seller/properties`)
@@ -44,17 +44,13 @@ export async function generateUniqueSlug(
   return slug;
 }
 
-/** Splits a comma separated string into a trimmed, de-duplicated array. */
-export function toList(value?: string | null): string[] {
-  if (!value) return [];
-  return Array.from(
-    new Set(
-      value
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-    )
-  );
+/**
+ * Splits a comma separated string — or an already split array, which is what
+ * the property form posts — into a trimmed, de-duplicated list.
+ * Empty / missing input yields `[]`.
+ */
+export function toList(value?: string | string[] | null): string[] {
+  return toStringList(value);
 }
 
 function clean(value?: string | null): string | null {

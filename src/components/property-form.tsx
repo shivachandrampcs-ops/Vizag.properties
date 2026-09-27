@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   propertySchema,
+  toStringList,
   type PropertyInput,
 } from "@/lib/validations";
 import { VIZAG_LOCATIONS, cn } from "@/lib/utils";
@@ -163,18 +164,9 @@ export function PropertyForm({
         ...data,
         intent,
         ...(isAdmin ? { builderId: Number(accountId) } : {}),
-        amenities: data.amenities
-          ? String(data.amenities)
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-          : [],
-        highlights: data.highlights
-          ? String(data.highlights)
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-          : [],
+        // Optional fields: an empty input posts [] — never a placeholder.
+        amenities: toStringList(data.amenities as string | string[] | null),
+        highlights: toStringList(data.highlights as string | string[] | null),
         images: images.map((img, i) => ({
           imageUrl: img.imageUrl,
           altText: data.title ?? "",
