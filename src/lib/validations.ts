@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  MAX_LISTING_TAGS,
+  MAX_LISTING_TAG_LENGTH,
   MAX_PROPERTY_IMAGES,
   MIN_REJECTION_REASON_LENGTH,
 } from "./constants";
@@ -178,11 +180,66 @@ export const propertySchema = z.object({
   approvalInfo: z.string().max(500).optional().or(z.literal("")),
   contactPreference: z.enum(["call", "whatsapp", "both"]).default("both"),
   isFeatured: z.coerce.boolean().default(false),
+  // Form-level shape: both fields are rendered as a single comma separated
+  // text input. The API accepts this string *or* an already split array —
+  // see `optionalStringList` below.
   amenities: z.string().optional().or(z.literal("")),
   highlights: z.string().optional().or(z.literal("")),
 });
 
 export type PropertyInput = z.infer<typeof propertySchema>;
+
+/**
+ * Normalises an optional list field (amenities / highlights).
+ *
+ * Accepts the comma separated string typed into the form, an already split
+ * array, `null`, `undefined` or `""`, and always returns a trimmed,
+ * de-duplicated `string[]`. Empty input yields `[]` — these fields are
+ * optional and must never block a submission, and nothing is ever filled in
+ * on the seller's behalf.
+ */
+export function toStringList(value?: string | string[] | null): string[] {
+  const entries = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(",")
+      : [];
+
+  const seen = new Set<string>();
+  const list: string[] = [];
+
+  for (const entry of entries) {
+    if (typeof entry !== "string") continue;
+    const item = entry.trim();
+    if (!item || seen.has(item)) continue;
+    seen.add(item);
+    list.push(item);
+  }
+
+  return list;
+}
+
+/**
+ * Optional list field as accepted by the API:
+ * `string | string[] | null | undefined` → `string[]` (`[]` when empty).
+ */
+const optionalStringList = z
+  .union([z.string(), z.array(z.string())])
+  .nullish()
+  .transform((value) => toStringList(value))
+  .pipe(
+    z
+      .array(
+        z
+          .string()
+          .max(
+            MAX_LISTING_TAG_LENGTH,
+            `Each entry must be ${MAX_LISTING_TAG_LENGTH} characters or less`
+          )
+      )
+      .max(MAX_LISTING_TAGS, `You can add at most ${MAX_LISTING_TAGS} entries`)
+  )
+  .default([]);
 
 /** "draft" keeps the listing private, "submit" sends it to admin review. */
 export const propertyIntentSchema = z.enum(["draft", "submit"]);
@@ -193,6 +250,10 @@ export const propertyIntentSchema = z.enum(["draft", "submit"]);
  */
 export const propertyPayloadSchema = propertySchema.extend({
   intent: propertyIntentSchema.default("draft"),
+  // Optional: the form posts the split list, older clients post the raw
+  // comma separated string. Leaving them empty is valid and stores [].
+  amenities: optionalStringList,
+  highlights: optionalStringList,
   images: z
     .array(propertyImageInputSchema)
     .max(MAX_PROPERTY_IMAGES, `You can add at most ${MAX_PROPERTY_IMAGES} images`)
