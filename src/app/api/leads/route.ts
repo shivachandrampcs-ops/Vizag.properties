@@ -92,6 +92,34 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const n8nWebhookUrl = process.env.N8N_LEAD_WEBHOOK_URL;
+
+if (n8nWebhookUrl) {
+  try {
+    await fetch(n8nWebhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        leadId: inserted.id,
+        name: inserted.name,
+        phone: inserted.phone,
+        email: inserted.email,
+        budget: inserted.budget,
+        preferredLocation: inserted.preferredLocation,
+        message: inserted.message,
+        source: inserted.source,
+        propertyId: inserted.propertyId,
+        propertyType: inserted.propertyType,
+        assignedBuilderId: inserted.assignedBuilderId,
+      }),
+    });
+  } catch (error) {
+    console.error("n8n webhook failed:", error);
+  }
+}
+
     return NextResponse.json({ success: true, lead: inserted });
   } catch (err) {
     console.error("Lead create error:", err);
