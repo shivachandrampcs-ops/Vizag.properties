@@ -1,0 +1,1 @@
+ALTER TABLE "builders" ALTER COLUMN "email" SET NOT NULL;

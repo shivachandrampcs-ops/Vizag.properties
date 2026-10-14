@@ -22,6 +22,13 @@
       "when": 1791961824574,
       "tag": "0002_add_mobile_and_area_units",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791989099490,
+      "tag": "0003_restore_builder_email_not_null",
+      "breakpoints": true
     }
   ]
 }

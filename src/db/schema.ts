@@ -106,7 +106,7 @@ export const builders = pgTable(
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 200 }).notNull(),
     slug: varchar("slug", { length: 200 }).notNull().unique(),
-    email: varchar("email", { length: 200 }).unique(),
+    email: varchar("email", { length: 200 }).notNull().unique(),
     phone: varchar("phone", { length: 20 }).notNull(),
     /** Canonical +91 value for new/updated accounts; legacy rows stay null. */
     phoneE164: varchar("phone_e164", { length: 16 }),

@@ -1,25 +1,23 @@
 /**
- * Search suggestions for Visakhapatnam and its commonly described suburbs.
- * Canonical names are shared by forms, property filters and homepage links.
+ * Search suggestions for Visakhapatnam and nearby localities. Canonical names
+ * are shared by forms, property filters and homepage links; their inclusion is
+ * not a claim about GVMC jurisdiction, postal boundaries, service coverage or
+ * property legality.
  *
- * Reference sources consulted for locality discovery and spelling review
- * (14 Oct 2026):
- * - GVMC elected-council ward-wise area details (98 wards):
+ * Municipal-source review (14 Oct 2026) used only these official GVMC sources:
+ * - Elected-council ward-wise area details:
  *   https://www.gvmc.gov.in/image_uploads/GVMC%20Corporators%20Ward%20wsie%20Area%20details.pdf
- * - GVMC final 98-ward delimitation notification:
+ * - Final 98-ward delimitation notification:
  *   https://www.gvmc.gov.in/wss/image_uploads/gnengward98.pdf
- * - Visakhapatnam neighbourhood list (secondary source; also includes nearby
- *   suburbs):
- *   https://en.wikipedia.org/wiki/List_of_neighbourhoods_in_Visakhapatnam
- * - Visakhapatnam map/locality directory (secondary spelling reference):
- *   https://www.mapsofindia.com/visakhapatnam/
  *
- * This list contains 112 distinct search suggestions, including nearby Greater
- * Vizag settlements outside GVMC. It has not been reconciled name-by-name
- * against the official ward records; treat it as a candidate search vocabulary,
- * not a verified municipal directory, legal boundary, postal directory, proof
- * of service coverage, or property check. Complete official-source review
- * before describing the entries as verified.
+ * 85 suggestions directly/clearly match a name in the ward-area list; 27
+ * remain ambiguous or unmatched and are explicitly listed below as
+ * unverified. The delimitation notification review was incomplete (only the
+ * first three of eight fetched chunks were reviewed; a later chunk failed), so
+ * even a ward-area name match is not proof of current jurisdiction or service
+ * coverage. An unmatched suggestion is not evidence that the locality is
+ * outside GVMC. The full 112-name vocabulary is retained for search, while the
+ * verification status remains separate and auditable.
  */
 
 export const VIZAG_LOCATION_GROUPS = [
@@ -160,6 +158,51 @@ export const VIZAG_LOCATION_GROUPS = [
 /** Flat canonical list for autocomplete and compact navigation components. */
 export const VIZAG_LOCATIONS = VIZAG_LOCATION_GROUPS.flatMap(
   (group) => group.locations
+);
+
+/** Names in the suggestion list that remain unverified against the GVMC sources. */
+export const VIZAG_UNVERIFIED_LOCALITY_SUGGESTIONS = [
+  "Asilmetta",
+  "Balayya Sastri Layout",
+  "Burujupeta",
+  "Dwaraka Nagar",
+  "Jagadamba Centre",
+  "Kailasapuram",
+  "Maharanipeta",
+  "One Town",
+  "Siripuram",
+  "Town Kotha Road",
+  "Waltair",
+  "Anandapuram",
+  "Gambhiram",
+  "Gidijala",
+  "Mangamaripeta",
+  "Padmanabham",
+  "Pothinamallayya Palem",
+  "Sontyam",
+  "Vellanki",
+  "Atchutapuram",
+  "Parawada",
+  "Scindia",
+  "Ukkunagaram",
+  "Chintalagraharam",
+  "Devipuram",
+  "NAD Junction",
+  "Sabbavaram",
+] as const;
+
+const unverifiedLocalityKeys = new Set(
+  VIZAG_UNVERIFIED_LOCALITY_SUGGESTIONS.map((name) =>
+    name.toLocaleLowerCase("en-IN")
+  )
+);
+
+/**
+ * Suggestions that directly/clearly match a name in the cited GVMC ward-area
+ * list. This is a source-name match only, not a current-boundary assertion.
+ */
+export const VIZAG_GVMC_WARD_AREA_NAME_MATCHES = VIZAG_LOCATIONS.filter(
+  (name) => !unverifiedLocalityKeys.has(name.toLocaleLowerCase("en-IN"))
 );
 
 /**

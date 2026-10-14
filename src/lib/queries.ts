@@ -22,7 +22,7 @@ export type SellerSummary = {
   id: number;
   name: string;
   slug: string;
-  email: string | null;
+  email: string;
   phone: string;
   whatsappNumber: string | null;
   companyName: string | null;

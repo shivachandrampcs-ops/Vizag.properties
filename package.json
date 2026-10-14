@@ -7,10 +7,10 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/core-forms.test.ts",
+    "test": "tsx --test src/lib/core-forms.test.ts scripts/db/migration-markers.test.mjs",
     "set-credentials": "node scripts/set-credentials.js",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node scripts/db/migrate-existing-db.mjs --apply",
     "db:migrate:existing": "node scripts/db/migrate-existing-db.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"

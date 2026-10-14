@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { areaUnitLabel, defaultAreaUnitForType, propertyAreaFieldLabel } from "./area-units";
-import { VIZAG_LOCATIONS, vizagLocationSearchValues } from "./locations";
+import {
+  VIZAG_GVMC_WARD_AREA_NAME_MATCHES,
+  VIZAG_LOCATIONS,
+  VIZAG_UNVERIFIED_LOCALITY_SUGGESTIONS,
+  vizagLocationSearchValues,
+} from "./locations";
 import { isValidIndianMobile, normalizeIndianMobile } from "./phone";
 import { leadSchema, loginSchema, registrationSchema, sellerLoginSchema, sellerProfileSchema } from "./validations";
 
@@ -85,5 +90,10 @@ test("locality suggestions are distinct and legacy search aliases resolve", () =
   const normalized = VIZAG_LOCATIONS.map((name) => name.toLocaleLowerCase("en-IN"));
   assert.equal(VIZAG_LOCATIONS.length, 112);
   assert.equal(new Set(normalized).size, VIZAG_LOCATIONS.length);
+  assert.equal(VIZAG_GVMC_WARD_AREA_NAME_MATCHES.length, 85);
+  assert.equal(VIZAG_UNVERIFIED_LOCALITY_SUGGESTIONS.length, 27);
+  assert.ok(
+    VIZAG_UNVERIFIED_LOCALITY_SUGGESTIONS.every((name) => VIZAG_LOCATIONS.includes(name))
+  );
   assert.deepEqual(vizagLocationSearchValues("Bheemunipatnam"), ["Bheemunipatnam", "Bheemili"]);
 });
