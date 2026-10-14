@@ -9,7 +9,7 @@ import { getAdminProperties, getDashboardStats } from "@/lib/queries";
 import { ModerationActions } from "@/components/moderation-actions";
 import { ModerationBadge, AccountTypeBadge } from "@/components/moderation-badge";
 import { DeletePropertyButton } from "@/components/delete-property-button";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatArea } from "@/lib/utils";
 import { ShieldCheck, ExternalLink, Edit, Search } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -162,7 +162,7 @@ export default async function AdminApprovalsPage({
                         {formatPrice(p.price)}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {p.area} sqft • {p.bedrooms ?? 0} BHK
+                        {formatArea(p.area, p.areaUnit)} • {p.bedrooms ?? 0} BHK
                       </div>
                     </div>
                   </div>

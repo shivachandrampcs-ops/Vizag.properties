@@ -1,3 +1,4 @@
+// Fictional development fixtures only. These are not real sellers, leads or property offers.
 import { db } from "@/db";
 import {
   builders,
@@ -8,9 +9,7 @@ import {
 } from "@/db/schema";
 import { hashPassword } from "./auth";
 import { createSlug } from "./queries";
-
-const BUILDER_PASSWORD = "Builder@123";
-const ADMIN_PASSWORD = "Admin@123";
+import { defaultAreaUnitForType } from "./area-units";
 
 const builderSeed = [
   {
@@ -24,7 +23,7 @@ const builderSeed = [
     address: "MVP Colony, Visakhapatnam",
     experienceYears: 25,
     projectsCount: 40,
-    isVerified: true,
+    isVerified: false,
   },
   {
     name: "Anand Vihar Builders",
@@ -37,7 +36,7 @@ const builderSeed = [
     address: "Dwaraka Nagar, Visakhapatnam",
     experienceYears: 18,
     projectsCount: 28,
-    isVerified: true,
+    isVerified: false,
   },
   {
     name: "Vizag Habitat Pvt Ltd",
@@ -50,7 +49,7 @@ const builderSeed = [
     address: "Madhurawada, Visakhapatnam",
     experienceYears: 12,
     projectsCount: 18,
-    isVerified: true,
+    isVerified: false,
   },
   {
     name: "Suryadev Estates",
@@ -63,7 +62,7 @@ const builderSeed = [
     address: "Rushikonda, Visakhapatnam",
     experienceYears: 20,
     projectsCount: 32,
-    isVerified: true,
+    isVerified: false,
   },
   {
     name: "BlueBay Properties",
@@ -76,7 +75,7 @@ const builderSeed = [
     address: "Beach Road, Visakhapatnam",
     experienceYears: 15,
     projectsCount: 14,
-    isVerified: true,
+    isVerified: false,
   },
 ];
 
@@ -89,7 +88,7 @@ const propertySeed = [
     furnishing: "semi_furnished",
     price: 9500000,
     pricePerSqft: 5500,
-    area: 1720,
+    area: 191,
     bedrooms: 3,
     bathrooms: 3,
     balconies: 2,
@@ -101,10 +100,10 @@ const propertySeed = [
     pincode: "530017",
     latitude: "17.7385",
     longitude: "83.3350",
-    reraId: "APRERA/REG/2024/001234",
+    reraId: null,
     isFeatured: true,
     description:
-      "Welcome to a thoughtfully designed 3 BHK luxury apartment in the heart of MVP Colony. Spread across 1,720 sqft on the 7th floor of a premium 12-storey tower, this home offers panoramic city views, abundant natural light and cross-ventilation. The apartment features a spacious living and dining area, modular kitchen with granite countertops, three well-appointed bedrooms with attached bathrooms, two large balconies and dedicated utility spaces. The project includes a 5,000 sqft clubhouse with swimming pool, gym, indoor games, party hall and landscaped gardens. Located within walking distance of top schools, hospitals and shopping centres, this is the perfect home for modern Vizag families.",
+      "Welcome to a thoughtfully designed 3 BHK luxury apartment in the heart of MVP Colony. Spread across approximately 191 sq. yd. (about 1,720 sq. ft.) on the 7th floor of a premium 12-storey tower, this home offers panoramic city views, abundant natural light and cross-ventilation. The apartment features a spacious living and dining area, modular kitchen with granite countertops, three well-appointed bedrooms with attached bathrooms, two large balconies and dedicated utility spaces. The project includes a 5,000 sqft clubhouse with swimming pool, gym, indoor games, party hall and landscaped gardens. Located within walking distance of top schools, hospitals and shopping centres, this is the perfect home for modern Vizag families.",
     amenities: [
       "Swimming Pool",
       "Gymnasium",
@@ -119,7 +118,6 @@ const propertySeed = [
     ],
     highlights: [
       "Ready to move-in",
-      "RERA registered project",
       "Premium fittings & finishes",
       "Vastu compliant layout",
       "Walking distance to schools & hospitals",
@@ -140,7 +138,7 @@ const propertySeed = [
     furnishing: "fully_furnished",
     price: 28000000,
     pricePerSqft: 8000,
-    area: 3500,
+    area: 389,
     bedrooms: 4,
     bathrooms: 5,
     balconies: 3,
@@ -152,10 +150,10 @@ const propertySeed = [
     pincode: "530045",
     latitude: "17.8295",
     longitude: "83.3850",
-    reraId: "APRERA/REG/2023/005678",
+    reraId: null,
     isFeatured: true,
     description:
-      "An iconic 4 BHK sea-facing penthouse on the 18th floor with uninterrupted views of the Bay of Bengal. This 3,500 sqft residence is fully furnished with imported fittings, Italian marble flooring, smart home automation and a private terrace pool. The master suite features a walk-in wardrobe and a spa-style bathroom. The building offers concierge services, a rooftop infinity pool, sky lounge, private elevator access and dedicated parking for three cars. A rare opportunity to own a true luxury address in Vizag.",
+      "An iconic 4 BHK sea-facing penthouse on the 18th floor with uninterrupted views of the Bay of Bengal. This approximately 389 sq. yd. residence (about 3,500 sq. ft.) is fully furnished with imported fittings, Italian marble flooring, smart home automation and a private terrace pool. The master suite features a walk-in wardrobe and a spa-style bathroom. The building offers concierge services, a rooftop infinity pool, sky lounge, private elevator access and dedicated parking for three cars. A rare opportunity to own a true luxury address in Vizag.",
     amenities: [
       "Private Terrace Pool",
       "Sky Lounge",
@@ -190,7 +188,7 @@ const propertySeed = [
     furnishing: "unfurnished",
     price: 3200000,
     pricePerSqft: 3200,
-    area: 1000,
+    area: 111,
     bedrooms: 2,
     bathrooms: 2,
     balconies: 1,
@@ -202,7 +200,7 @@ const propertySeed = [
     pincode: "530026",
     latitude: "17.6850",
     longitude: "83.1800",
-    reraId: "APRERA/REG/2024/009012",
+    reraId: null,
     isFeatured: true,
     description:
       "A practical and well-planned 2 BHK apartment ideal for first-time homebuyers and young families. The home features a bright living room, separate kitchen, two bedrooms with attached bathrooms, a balcony and a dedicated utility area. The complex offers covered parking, lifts, security, children's play area and a community hall. Located in the heart of Gajuwaka with easy access to the railway station, bus stops, schools and markets.",
@@ -220,7 +218,6 @@ const propertySeed = [
       "Ready to move-in",
       "Prime Gajuwaka location",
       "Good rental potential",
-      "RERA registered",
     ],
     images: [
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1600&h=1000&fit=crop",
@@ -236,7 +233,7 @@ const propertySeed = [
     furnishing: "unfurnished",
     price: 7800000,
     pricePerSqft: 4800,
-    area: 1620,
+    area: 180,
     bedrooms: 3,
     bathrooms: 3,
     balconies: 2,
@@ -248,7 +245,7 @@ const propertySeed = [
     pincode: "530016",
     latitude: "17.7150",
     longitude: "83.3100",
-    reraId: "APRERA/REG/2024/003456",
+    reraId: null,
     isFeatured: false,
     description:
       "An elegantly designed 3 BHK garden apartment on the 3rd floor with a private garden. The home offers a large living room, dining area, modular kitchen, three bedrooms and two spacious balconies. Project amenities include a clubhouse, gym, swimming pool, jogging track and landscaped gardens. Expected possession by December 2026. Pre-launch offers available for early buyers.",
@@ -267,7 +264,6 @@ const propertySeed = [
       "Private garden with apartment",
       "Pre-launch offers available",
       "Flexible payment plans",
-      "RERA registered",
     ],
     images: [
       "https://images.unsplash.com/photo-1494526585095-c41746248156?w=1600&h=1000&fit=crop",
@@ -293,12 +289,11 @@ const propertySeed = [
     pincode: "531035",
     latitude: "17.7900",
     longitude: "83.1200",
-    reraId: "APRERA/PLOT/2024/00789",
+    reraId: null,
     isFeatured: true,
     description:
-      "A 200 sqyd fully developed residential plot in a DTCP-approved layout at Sabbavaram. The plot comes with 40ft and 30ft blacktop internal roads, underground drainage, electricity, water supply and streetlights. The gated community offers 24x7 security, a park, children's play area and a community hall. HMDA/RERA approved layout with clear title. Ideal for building your dream home in a fast-growing corridor of Vizag.",
+      "A sample 200 sqyd residential plot listing at Sabbavaram. The sample description includes internal roads, drainage, electricity, water supply, streetlights, a park and a community hall. This demo listing is not a real property offer; buyers must independently verify any actual property's approvals, title and applicable RERA registration.",
     amenities: [
-      "DTCP Approved Layout",
       "24x7 Security",
       "Underground Drainage",
       "Underground Electricity",
@@ -308,8 +303,6 @@ const propertySeed = [
       "Community Hall",
     ],
     highlights: [
-      "DTCP approved & RERA registered",
-      "Clear title & ready for construction",
       "Located in growth corridor",
       "40ft & 30ft blacktop roads",
       "Excellent appreciation potential",
@@ -338,7 +331,7 @@ const propertySeed = [
     pincode: "530024",
     latitude: "17.8200",
     longitude: "83.3900",
-    reraId: "APRERA/PLOT/2024/00555",
+    reraId: null,
     isFeatured: false,
     description:
       "A premium 300 sqyd corner plot in a fully developed gated layout at Kommadi. Excellent connectivity to IT corridor, schools, hospitals and the new international airport. The layout has wide 60ft main road, 40ft internal roads, landscaped parks, rainwater harvesting and solar-powered common areas. Perfect for building a luxury villa.",
@@ -383,7 +376,7 @@ const propertySeed = [
     pincode: "530045",
     latitude: "17.8400",
     longitude: "83.4000",
-    reraId: "APRERA/VILLA/2024/00222",
+    reraId: null,
     isFeatured: true,
     description:
       "A stunning 4 BHK independent villa in a private gated community of 12 homes at Yendada. Built on a 350 sqyd plot with a 2,850 sqft built-up area across ground and first floors. The villa features a private garden, covered sit-out, spacious living and dining, modular kitchen, four bedrooms with attached bathrooms, a study, family lounge and servant quarters. Premium fittings, imported tiles, video door phone and home automation. A tranquil address with easy access to the IT corridor.",
@@ -432,7 +425,7 @@ const propertySeed = [
     pincode: "531163",
     latitude: "17.8860",
     longitude: "83.4520",
-    reraId: "APRERA/VILLA/2024/00999",
+    reraId: null,
     isFeatured: true,
     description:
       "A breathtaking 5 BHK beachfront villa on the pristine shores of Bheemunipatnam. The 3,750 sqft fully furnished villa sits on a 500 sqyd plot with direct beach access, an infinity-edge pool overlooking the Bay of Bengal, private landscaped gardens and a rooftop entertainment deck. Italian marble, smart home automation, designer lighting, private elevator and an outdoor kitchen make this a true luxury retreat. The villa is part of a 6-villa private estate with 24x7 security and concierge services.",
@@ -481,7 +474,7 @@ const propertySeed = [
     pincode: "530016",
     latitude: "17.7150",
     longitude: "83.3100",
-    reraId: "APRERA/COMM/2024/00333",
+    reraId: null,
     isFeatured: false,
     description:
       "A premium fully furnished Grade-A office space of 1,665 sqft on the 5th floor of a commercial tower in Dwaraka Nagar. The space includes a reception area, two conference rooms, individual cabins, an open work area, pantry, server room and two restrooms. Building amenities include 24x7 security, multiple lifts, fire-fighting systems, power backup and reserved parking. Ideal for IT, consulting and corporate offices.",
@@ -528,7 +521,7 @@ const propertySeed = [
     pincode: "530001",
     latitude: "17.7230",
     longitude: "83.3280",
-    reraId: "APRERA/COMM/2024/00444",
+    reraId: null,
     isFeatured: true,
     description:
       "A high-visibility 1,200 sqft ground-floor retail showroom on Beach Road, one of Vizag's most prestigious commercial addresses. Double-height glass frontage, 12-foot ceiling, 30-foot frontage and high footfall make this an ideal location for premium retail brands, banks, restaurants and showrooms. Includes dedicated parking, signage rights and 24x7 access.",
@@ -574,7 +567,7 @@ const propertySeed = [
     pincode: "531173",
     latitude: "17.8050",
     longitude: "83.2050",
-    reraId: "APRERA/HOUSE/2024/00666",
+    reraId: null,
     isFeatured: false,
     description:
       "A spacious 4 BHK independent house on a 200 sqyd plot in a quiet residential colony at Pendurthi. Ground floor: living room, dining, kitchen, one bedroom and one bathroom. First floor: three bedrooms with attached bathrooms, balcony and family lounge. The house has covered parking for two cars, a private garden, borewell and overhead tank. Ideal for large families looking for independent living with good connectivity to the airport and IT corridor.",
@@ -608,7 +601,7 @@ const propertySeed = [
     furnishing: "unfurnished",
     price: 6500000,
     pricePerSqft: 4200,
-    area: 1550,
+    area: 172,
     bedrooms: 3,
     bathrooms: 3,
     balconies: 2,
@@ -620,10 +613,10 @@ const propertySeed = [
     pincode: "530048",
     latitude: "17.8200",
     longitude: "83.3700",
-    reraId: "APRERA/REG/2024/00777",
+    reraId: null,
     isFeatured: true,
     description:
-      "Brand new launch - 3 BHK premium apartments at Madhurawada, Vizag's fastest growing residential hub. Spread across 1,550 sqft, the homes offer spacious layouts, large balconies and stunning hill views. The 15-storey tower includes a grand clubhouse, infinity pool, sky garden, co-working space, gym and kids' zone. Walking distance to IT companies, schools and the proposed metro. Book now at pre-launch prices.",
+      "Brand new launch - 3 BHK premium apartments at Madhurawada, Vizag's fastest growing residential hub. Spread across approximately 172 sq. yd. (about 1,550 sq. ft.), the homes offer spacious layouts, large balconies and stunning hill views. The 15-storey tower includes a grand clubhouse, infinity pool, sky garden, co-working space, gym and kids' zone. Walking distance to IT companies, schools and the proposed metro. Book now at pre-launch prices.",
     amenities: [
       "Infinity Pool",
       "Sky Garden",
@@ -639,7 +632,6 @@ const propertySeed = [
       "Near IT corridor & metro",
       "Premium 15-storey tower",
       "Hill view apartments",
-      "RERA registered",
     ],
     images: [
       "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&h=1000&fit=crop",
@@ -650,6 +642,10 @@ const propertySeed = [
 ];
 
 export async function seedDatabase() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Demo database seeding is disabled in production.");
+  }
+
   console.log("🌱 Seeding database...");
 
   // Check if already seeded
@@ -659,18 +655,26 @@ export async function seedDatabase() {
     return;
   }
 
-  // Create admin
-  const adminPasswordHash = await hashPassword(ADMIN_PASSWORD);
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  const builderPassword = process.env.SEED_BUILDER_PASSWORD;
+  if (!adminPassword || !builderPassword) {
+    throw new Error(
+      "Local demo seeding requires SEED_ADMIN_PASSWORD and SEED_BUILDER_PASSWORD."
+    );
+  }
+
+  // Create admin with credentials supplied only through the local environment.
+  const adminPasswordHash = await hashPassword(adminPassword);
   await db.insert(admins).values({
     name: "Vizag Properties Admin",
     email: "admin@vizag.properties",
     passwordHash: adminPasswordHash,
     role: "admin",
   });
-  console.log("✅ Created admin: admin@vizag.properties / Admin@123");
+  console.log("✅ Created local demo administrator.");
 
-  // Create builders
-  const builderPasswordHash = await hashPassword(BUILDER_PASSWORD);
+  // Create builders using the environment-supplied local demo password.
+  const builderPasswordHash = await hashPassword(builderPassword);
   const builderMap: Record<string, number> = {};
 
   for (const b of builderSeed) {
@@ -716,6 +720,7 @@ export async function seedDatabase() {
         price: p.price,
         pricePerSqft: p.pricePerSqft,
         area: p.area,
+        areaUnit: defaultAreaUnitForType(p.propertyType),
         bedrooms: p.bedrooms,
         bathrooms: p.bathrooms,
         balconies: p.balconies,
@@ -787,8 +792,5 @@ export async function seedDatabase() {
   ]);
   console.log("✅ Created sample leads");
 
-  console.log("🎉 Database seeded successfully!");
-  console.log("\n📝 Login Credentials:");
-  console.log("Admin: admin@vizag.properties / Admin@123");
-  console.log("Builder: contact@sravanthi.com / Builder@123");
+  console.log("🎉 Demo database seeded successfully. No credentials were logged.");
 }

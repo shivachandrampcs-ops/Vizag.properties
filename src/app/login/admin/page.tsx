@@ -51,20 +51,17 @@ export default async function AdminLoginPage() {
           <div className="mt-6">
             <AdminLoginForm />
           </div>
-          <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-            <p className="text-xs text-slate-500">Demo credentials:</p>
-            <p className="mt-1 text-xs font-mono text-slate-700">
-              admin@vizag.properties / Admin@123
-            </p>
-          </div>
+          <p className="mt-6 pt-6 border-t border-slate-200 text-center text-xs text-slate-500">
+            Sign in with administrator credentials supplied by the site operator.
+          </p>
         </div>
         <p className="mt-6 text-center text-sm text-slate-600">
-          Are you a builder?{" "}
+          Are you a seller?{" "}
           <Link
             href="/login/builder"
             className="font-semibold text-brand-600 hover:text-brand-700"
           >
-            Builder login
+            Seller login
           </Link>
         </p>
       </div>

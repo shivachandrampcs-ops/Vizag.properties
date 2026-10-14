@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { PropertyAreaUnit } from "./area-units";
+export { VIZAG_LOCATIONS } from "./locations";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -24,8 +26,16 @@ export function formatPriceFull(price: number): string {
   return `₹ ${price.toLocaleString("en-IN")}`;
 }
 
-export function formatArea(area: number): string {
-  return `${area.toLocaleString("en-IN")} sqft`;
+export function formatArea(
+  area: number,
+  unit?: PropertyAreaUnit | null
+): string {
+  const formatted = area.toLocaleString("en-IN");
+  if (unit === "sqft") return `${formatted} sq. ft.`;
+  if (unit === "sqyd") return `${formatted} sq. yd.`;
+  // Pre-existing property values remain untouched until their unit is
+  // confirmed; never silently infer a new unit for a legacy listing.
+  return `${formatted} (unit not recorded)`;
 }
 
 export function titleCase(str: string): string {
@@ -37,7 +47,7 @@ export function titleCase(str: string): string {
 
 export function propertyTypeLabel(type: string): string {
   const map: Record<string, string> = {
-    apartment: "Apartment",
+    apartment: "Flat / Apartment",
     villa: "Villa",
     plot: "Plot",
     independent_house: "Independent House",
@@ -67,42 +77,13 @@ export function furnishingLabel(f: string | null | undefined): string {
   return map[f] ?? titleCase(f);
 }
 
-export const VIZAG_LOCATIONS = [
-  "Madhurawada",
-  "Gajuwaka",
-  "MVP Colony",
-  "Dwaraka Nagar",
-  "Beach Road",
-  "Rushikonda",
-  "Yendada",
-  "Pendurthi",
-  "Anakapalle",
-  "Sabbavaram",
-  "Kommadi",
-  "Mangalapalem",
-  "Bheemunipatnam",
-  "Kancharapalem",
-  "Marripalem",
-  "Gopalapatnam",
-  "NAD Junction",
-  "Akkayyapalem",
-  "Siripuram",
-  "Waltair",
-  "Hanumanthawaka",
-  "Lankelapalem",
-  "Vepagunta",
-  "Arilova",
-  "Kapuluppada",
-  "Thagarapuvalasa",
-] as const;
-
 export const SITE_CONFIG = {
   name: "Vizag Properties",
   shortName: "VizagProps",
   domain: "vizag.properties",
   url: "https://vizag.properties",
   description:
-    "Discover verified apartments, villas, plots and commercial properties in Visakhapatnam (Vizag). Free property consultation with trusted local builders.",
+    "Browse seller-submitted property listings and submit enquiries in Visakhapatnam (Vizag). Verify property and legal details independently before proceeding.",
   phone: "+91 7702434892",
   phoneRaw: "+917702434892",
   whatsapp: "https://wa.me/917702434892",

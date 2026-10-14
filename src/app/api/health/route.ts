@@ -9,11 +9,14 @@ export async function GET() {
   try {
     await db.execute(sql`select 1`);
 
-    // Auto-seed if empty (only first request)
-    try {
-      await seedDatabase();
-    } catch (e) {
-      // ignore seed errors - they may be transient
+    // Demo fixtures may be seeded during local development only. A health
+    // check must never write demo users, listings or leads into production.
+    if (process.env.NODE_ENV === "development") {
+      try {
+        await seedDatabase();
+      } catch {
+        // Keep health status independent of optional local demo fixtures.
+      }
     }
 
     return NextResponse.json({
@@ -21,12 +24,9 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       message: "Vizag Properties API is healthy",
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
-      {
-        status: "error",
-        error: err instanceof Error ? err.message : "Unknown error",
-      },
+      { status: "error", error: "Database health check failed" },
       { status: 500 }
     );
   }

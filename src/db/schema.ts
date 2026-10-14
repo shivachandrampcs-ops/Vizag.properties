@@ -8,6 +8,7 @@ import {
   boolean,
   pgEnum,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
@@ -29,6 +30,12 @@ export const propertyStatusEnum = pgEnum("property_status", [
   "under_construction",
   "new_launch",
   "resale",
+]);
+
+/** Explicitly records the unit for new property-area values. */
+export const propertyAreaUnitEnum = pgEnum("property_area_unit", [
+  "sqft",
+  "sqyd",
 ]);
 
 export const furnishingEnum = pgEnum("furnishing", [
@@ -101,6 +108,8 @@ export const builders = pgTable(
     slug: varchar("slug", { length: 200 }).notNull().unique(),
     email: varchar("email", { length: 200 }).notNull().unique(),
     phone: varchar("phone", { length: 20 }).notNull(),
+    /** Canonical +91 value for new/updated accounts; legacy rows stay null. */
+    phoneE164: varchar("phone_e164", { length: 16 }),
     passwordHash: text("password_hash").notNull(),
 
     /** builder | owner | agent — see publisherTypeEnum */
@@ -133,6 +142,10 @@ export const builders = pgTable(
   },
   (t) => ({
     emailIdx: index("builders_email_idx").on(t.email),
+    phoneIdx: index("builders_phone_idx").on(t.phone),
+    phoneE164UniqueIdx: uniqueIndex("builders_phone_e164_unique_idx")
+      .on(t.phoneE164)
+      .where(sql`${t.phoneE164} IS NOT NULL`),
     slugIdx: index("builders_slug_idx").on(t.slug),
     publisherTypeIdx: index("builders_publisher_type_idx").on(t.publisherType),
     isVerifiedIdx: index("builders_is_verified_idx").on(t.isVerified),
@@ -173,7 +186,9 @@ export const properties = pgTable(
     furnishing: furnishingEnum("furnishing").default("unfurnished"),
     price: integer("price").notNull(), // in INR
     pricePerSqft: integer("price_per_sqft"),
-    area: integer("area").notNull(), // sqft
+    // Existing values are preserved; null `area_unit` means the legacy unit is unknown.
+    area: integer("area").notNull(),
+    areaUnit: propertyAreaUnitEnum("area_unit"),
     bedrooms: integer("bedrooms").default(0),
     bathrooms: integer("bathrooms").default(0),
     balconies: integer("balconies").default(0),
@@ -272,7 +287,7 @@ export const leads = pgTable(
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 200 }).notNull(),
     phone: varchar("phone", { length: 20 }).notNull(),
-    email: varchar("email", { length: 200 }).notNull(),
+    email: varchar("email", { length: 200 }),
     budget: varchar("budget", { length: 100 }),
     preferredLocation: varchar("preferred_location", { length: 200 }),
     propertyId: integer("property_id").references(() => properties.id, {

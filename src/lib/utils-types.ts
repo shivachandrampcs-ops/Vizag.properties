@@ -28,6 +28,7 @@ export type PropertyWithRelations = {
   price: number;
   pricePerSqft: number | null;
   area: number;
+  areaUnit: "sqft" | "sqyd" | null;
   bedrooms: number | null;
   bathrooms: number | null;
   balconies: number | null;

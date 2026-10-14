@@ -36,6 +36,7 @@ import {
   furnishingLabel,
   SITE_CONFIG,
 } from "@/lib/utils";
+import { areaUnitLabel, propertyAreaFieldLabel } from "@/lib/area-units";
 import {
   publisherTypeChipClass,
   publisherTypeLabel,
@@ -62,7 +63,7 @@ export async function generateMetadata({
     };
   }
   const title = `${property.title} | ${property.location}, Vizag`;
-  const description = `${propertyTypeLabel(property.propertyType)} for sale in ${property.location}, Visakhapatnam. ${formatPrice(property.price)}. ${property.area} sqft. ${property.bedrooms ?? 0} BHK. ${property.description.slice(0, 120)}`;
+  const description = `${propertyTypeLabel(property.propertyType)} for sale in ${property.location}, Visakhapatnam. ${formatPrice(property.price)}. ${formatArea(property.area, property.areaUnit)}. ${property.bedrooms ?? 0} BHK. ${property.description.slice(0, 120)}`;
 
   return {
     title,
@@ -152,12 +153,14 @@ export default async function PropertyDetailsPage({
       : undefined,
     numberOfBedrooms: property.bedrooms ?? undefined,
     numberOfBathroomsTotal: property.bathrooms ?? undefined,
-    floorSize: {
-      "@type": "QuantitativeValue",
-      value: property.area,
-      unitCode: "FTK",
-      unitText: "sqft",
-    },
+    floorSize: property.areaUnit
+      ? {
+          "@type": "QuantitativeValue",
+          value: property.area,
+          ...(property.areaUnit === "sqft" ? { unitCode: "FTK" } : {}),
+          unitText: areaUnitLabel(property.areaUnit),
+        }
+      : undefined,
     offers: {
       "@type": "Offer",
       price: property.price,
@@ -262,7 +265,7 @@ export default async function PropertyDetailsPage({
               </div>
               {property.pricePerSqft && (
                 <div className="text-sm text-slate-500 mt-1">
-                  ₹ {property.pricePerSqft.toLocaleString("en-IN")} per sqft
+                  ₹ {property.pricePerSqft.toLocaleString("en-IN")} per sq. ft.
                 </div>
               )}
               <div className="mt-3 flex lg:justify-end gap-2">
@@ -271,7 +274,7 @@ export default async function PropertyDetailsPage({
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold"
                 >
                   <Phone className="h-4 w-4" />
-                  Call Expert
+                  Call Vizag Properties
                 </a>
                 <a
                   href={SITE_CONFIG.whatsapp}
@@ -329,9 +332,9 @@ export default async function PropertyDetailsPage({
                   <div className="text-center p-4 rounded-xl bg-slate-50">
                     <Square className="h-5 w-5 text-brand-600 mx-auto" />
                     <div className="mt-2 text-2xl font-bold text-slate-900">
-                      {property.area.toLocaleString("en-IN")}
+                      {formatArea(property.area, property.areaUnit)}
                     </div>
-                    <div className="text-xs text-slate-500">Sqft Area</div>
+                    <div className="text-xs text-slate-500">Area</div>
                   </div>
                   {property.balconies !== null && property.balconies > 0 && (
                     <div className="text-center p-4 rounded-xl bg-slate-50">
@@ -379,13 +382,13 @@ export default async function PropertyDetailsPage({
                   />
                   {property.pricePerSqft && (
                     <DetailRow
-                      label="Price per sqft"
+                      label="Price per sq. ft."
                       value={`₹ ${property.pricePerSqft.toLocaleString("en-IN")}`}
                     />
                   )}
                   <DetailRow
-                    label="Carpet Area"
-                    value={formatArea(property.area)}
+                    label={propertyAreaFieldLabel(property.propertyType, property.areaUnit)}
+                    value={formatArea(property.area, property.areaUnit)}
                   />
                   {property.floor && (
                     <DetailRow
@@ -511,7 +514,7 @@ export default async function PropertyDetailsPage({
                       {property.seller.isVerified && (
                         <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 flex items-center gap-1">
                           <Award className="h-3 w-3" />
-                          Verified
+                          Seller account reviewed
                         </span>
                       )}
                     </div>
@@ -587,20 +590,26 @@ export default async function PropertyDetailsPage({
                 />
                 <div className="rounded-2xl bg-white border border-slate-200 p-5 text-sm">
                   <div className="font-bold text-slate-900 mb-2">
-                    Why enquire with us?
+                    Enquiry information
                   </div>
                   <ul className="space-y-1.5 text-slate-600">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span>Free property consultation</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Your enquiry may be routed to this listing&apos;s seller.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span>Complimentary site visit</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Confirm any site visit or service terms in advance.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span>No spam, 100% privacy</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>
+                        Read our{" "}
+                        <Link href="/privacy-policy" className="underline text-brand-700">
+                          Privacy Policy
+                        </Link>
+                        .
+                      </span>
                     </li>
                   </ul>
                 </div>

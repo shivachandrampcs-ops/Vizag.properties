@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { leadSchema, type LeadInput } from "@/lib/validations";
 import { Send, Loader2, CheckCircle2, AlertCircle, MessageCircle, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { VIZAG_LOCATIONS, SITE_CONFIG, formatPrice, titleCase } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { SITE_CONFIG, formatPrice, titleCase, cn } from "@/lib/utils";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
 
 type PropertyPrefill = {
   id: number;
@@ -107,7 +108,7 @@ export function LeadForm({
               Enquiry Submitted Successfully!
             </h3>
             <p className="mt-1 text-sm text-green-700">
-              Our property expert will contact you within 1 hour.
+              Your enquiry has been received. We will use the contact details you provided to respond.
             </p>
             <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
               <a
@@ -167,13 +168,14 @@ export function LeadForm({
                   htmlFor="phone"
                   className="block text-sm font-medium text-slate-700 mb-1.5"
                 >
-                  Phone Number <span className="text-red-500">*</span>
+                  Mobile Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="phone"
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
+                  maxLength={20}
                   {...register("phone")}
                   className={cn(
                     "w-full px-3.5 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors",
@@ -194,7 +196,7 @@ export function LeadForm({
                 htmlFor="email"
                 className="block text-sm font-medium text-slate-700 mb-1.5"
               >
-                Email <span className="text-red-500">*</span>
+                Email (optional)
               </label>
               <input
                 id="email"
@@ -244,19 +246,13 @@ export function LeadForm({
                 >
                   Preferred Location
                 </label>
-                <select
+                <LocationAutocomplete
                   id="preferredLocation"
+                  suggestionsId="lead-preferred-location-options"
                   {...register("preferredLocation")}
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors"
-                >
-                  <option value="">Select location</option>
-                  {VIZAG_LOCATIONS.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                  <option value="Other">Other</option>
-                </select>
+                  placeholder="Type or select a locality"
+                />
               </div>
             </div>
 
@@ -301,7 +297,11 @@ export function LeadForm({
               )}
             </button>
             <p className="text-xs text-slate-500 text-center">
-              🔒 Your information is secure. We never spam.
+              We use these details to handle your enquiry as described in our{" "}
+              <Link href="/privacy-policy" className="font-semibold text-brand-600 underline">
+                Privacy Policy
+              </Link>
+              . Please do not include passwords or financial account details.
             </p>
           </motion.form>
         )}

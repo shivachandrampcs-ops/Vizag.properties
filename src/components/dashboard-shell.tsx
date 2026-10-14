@@ -39,7 +39,7 @@ export function DashboardShell({
   title: string;
   user: {
     name: string;
-    email: string;
+    email: string | null;
     role: string;
     publisherType?: string;
     isVerified?: boolean;
@@ -109,7 +109,9 @@ export function DashboardShell({
                   </span>
                 )}
               </div>
-              <div className="text-xs text-slate-500">{user.email}</div>
+              <div className="text-xs text-slate-500">
+                {user.email ?? "Email not set"}
+              </div>
             </div>
             <button
               onClick={handleLogout}

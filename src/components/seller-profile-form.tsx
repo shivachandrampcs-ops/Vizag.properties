@@ -6,12 +6,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { sellerProfileSchema } from "@/lib/validations";
 import type { z } from "zod";
-import { cn, VIZAG_LOCATIONS } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
 import { AlertCircle, Loader2, Save } from "lucide-react";
 
 export type SellerProfileInitial = {
   name: string;
-  email: string;
+  email: string | null;
   phone: string;
   companyName?: string | null;
   whatsappNumber?: string | null;
@@ -54,7 +55,7 @@ export function SellerProfileForm({
     resolver: zodResolver(sellerProfileSchema),
     defaultValues: {
       name: initial.name,
-      email: initial.email,
+      email: initial.email ?? "",
       phone: initial.phone,
       companyName: initial.companyName ?? "",
       whatsappNumber: initial.whatsappNumber ?? "",
@@ -147,11 +148,16 @@ export function SellerProfileForm({
           />
         </div>
         <div>
-          <Label required>Email</Label>
+          <Label required>Email (login username)</Label>
           <input
             type="email"
+            inputMode="email"
+            autoComplete="email"
+            required
             {...register("email")}
             className={cn(inputClass, errors.email && "border-red-300")}
+            placeholder="you@example.com"
+            aria-invalid={Boolean(errors.email)}
           />
           {errors.email && (
             <p className="mt-1 text-xs text-red-600">
@@ -160,7 +166,7 @@ export function SellerProfileForm({
           )}
         </div>
         <div>
-          <Label required>Mobile Number</Label>
+          <Label required>Mobile Number (contact only)</Label>
           <input
             type="tel"
             {...register("phone")}
@@ -183,14 +189,13 @@ export function SellerProfileForm({
         </div>
         <div>
           <Label>Locality</Label>
-          <select {...register("locality")} className={inputClass}>
-            <option value="">Select locality</option>
-            {VIZAG_LOCATIONS.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
-              </option>
-            ))}
-          </select>
+          <LocationAutocomplete
+            id="seller-locality"
+            suggestionsId="seller-locality-options"
+            {...register("locality")}
+            className={inputClass}
+            placeholder="Type to search localities"
+          />
         </div>
         <div>
           <Label>City</Label>
@@ -251,8 +256,8 @@ export function SellerProfileForm({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
         <p className="text-xs text-slate-500">
           {isVerified
-            ? "Your account is verified by the Vizag Properties team."
-            : "Verification is done by our admin team after reviewing your documents."}
+            ? "Your seller account is marked as reviewed by an administrator; this does not verify any property or legal claim."
+            : "An administrator may review your account status. This is not property, title or legal verification."}
         </p>
         <button
           type="submit"

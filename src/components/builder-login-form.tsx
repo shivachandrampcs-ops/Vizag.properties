@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock, Loader2, AlertCircle, LogIn } from "lucide-react";
-import { loginSchema, type LoginInput } from "@/lib/validations";
+import {
+  sellerLoginSchema,
+  type SellerLoginInput,
+} from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 export function BuilderLoginForm({
   redirectTo = "/dashboard/seller",
 }: {
-  /** Where to land after a successful login (builders, owners and agents share one dashboard). */
+  /** Builders, owners and agents share the seller dashboard. */
   redirectTo?: string;
 } = {}) {
   const router = useRouter();
@@ -22,11 +25,11 @@ export function BuilderLoginForm({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<SellerLoginInput>({
+    resolver: zodResolver(sellerLoginSchema),
   });
 
-  async function onSubmit(data: LoginInput) {
+  async function onSubmit(data: SellerLoginInput) {
     setLoading(true);
     setError("");
     try {
@@ -37,7 +40,7 @@ export function BuilderLoginForm({
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Invalid credentials");
+        throw new Error(json.error || "Invalid email or password");
       }
       router.push(redirectTo);
       router.refresh();
@@ -48,10 +51,13 @@ export function BuilderLoginForm({
     }
   }
 
+  const inputClass =
+    "w-full pl-10 pr-3 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500";
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-3 flex items-start gap-2">
+        <div className="rounded-lg bg-red-50 border border-red-200 p-3 flex items-start gap-2" role="alert">
           <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
@@ -59,53 +65,54 @@ export function BuilderLoginForm({
 
       <div>
         <label
-          htmlFor="email"
+          htmlFor="seller-email"
           className="block text-sm font-medium text-slate-700 mb-1.5"
         >
-          Email
+          Email <span className="text-red-600">*</span>
         </label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
-            id="email"
+            id="seller-email"
             type="email"
+            inputMode="email"
             autoComplete="email"
             {...register("email")}
-            className={cn(
-              "w-full pl-10 pr-3 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500",
-              errors.email ? "border-red-300" : "border-slate-300"
-            )}
+            className={cn(inputClass, errors.email ? "border-red-300" : "border-slate-300")}
             placeholder="you@example.com"
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "seller-email-error" : undefined}
           />
         </div>
         {errors.email && (
-          <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+          <p id="seller-email-error" className="mt-1 text-xs text-red-600">
+            {errors.email.message}
+          </p>
         )}
       </div>
 
       <div>
         <label
-          htmlFor="password"
+          htmlFor="seller-password"
           className="block text-sm font-medium text-slate-700 mb-1.5"
         >
-          Password
+          Password <span className="text-red-600">*</span>
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
-            id="password"
+            id="seller-password"
             type="password"
             autoComplete="current-password"
             {...register("password")}
-            className={cn(
-              "w-full pl-10 pr-3 py-2.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500",
-              errors.password ? "border-red-300" : "border-slate-300"
-            )}
-            placeholder="••••••••"
+            className={cn(inputClass, errors.password ? "border-red-300" : "border-slate-300")}
+            placeholder="Your password"
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? "seller-password-error" : undefined}
           />
         </div>
         {errors.password && (
-          <p className="mt-1 text-xs text-red-600">
+          <p id="seller-password-error" className="mt-1 text-xs text-red-600">
             {errors.password.message}
           </p>
         )}
@@ -128,6 +135,9 @@ export function BuilderLoginForm({
           </>
         )}
       </button>
+      <p className="text-xs text-slate-500 text-center">
+        Sign in with the email and password associated with your seller account.
+      </p>
     </form>
   );
 }

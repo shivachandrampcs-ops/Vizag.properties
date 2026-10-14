@@ -5,6 +5,7 @@ import { leadSchema } from "@/lib/validations";
 import { and, eq } from "drizzle-orm";
 import { notify } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
+import { normalizeIndianMobile } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,14 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+    const phone = normalizeIndianMobile(data.phone);
+    if (!phone) {
+      return NextResponse.json(
+        { success: false, error: "Please enter a valid Indian mobile number" },
+        { status: 400 }
+      );
+    }
+    const email = data.email?.trim().toLowerCase() || null;
 
     // Route the lead to the seller who owns the property.
     // Only public (approved + active) listings accept enquiries.
@@ -71,8 +80,8 @@ export async function POST(req: NextRequest) {
       .insert(leads)
       .values({
         name: data.name,
-        phone: data.phone,
-        email: data.email,
+        phone,
+        email,
         budget: data.budget || null,
         preferredLocation: data.preferredLocation || null,
         propertyId: data.propertyId || null,
@@ -115,14 +124,14 @@ if (n8nWebhookUrl) {
         assignedBuilderId: inserted.assignedBuilderId,
       }),
     });
-  } catch (error) {
-    console.error("n8n webhook failed:", error);
+  } catch {
+    console.error("Lead notification webhook failed");
   }
 }
 
-    return NextResponse.json({ success: true, lead: inserted });
-  } catch (err) {
-    console.error("Lead create error:", err);
+    return NextResponse.json({ success: true });
+  } catch {
+    console.error("Lead create request failed");
     return NextResponse.json(
       { success: false, error: "Server error" },
       { status: 500 }

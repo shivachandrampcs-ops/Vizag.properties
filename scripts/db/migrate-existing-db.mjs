@@ -13,17 +13,14 @@
  *
  *     ERROR: column "approval_info" does not exist
  *
- * This script repairs that state without touching data:
- *
- *   1. Detects whether the baseline tables already exist (push-created DB).
- *   2. Records migration 0000 as already applied in that case (no DDL is run).
- *   3. Applies every remaining migration from drizzle/meta/_journal.json,
- *      in order, using the same sha256 hash bookkeeping Drizzle uses, so a
- *      later `npm run db:migrate` sees a fully consistent journal.
- *
- * Nothing is ever dropped, truncated or reset. All migration files applied here
- * are additive (CREATE TYPE / ADD COLUMN / ADD CONSTRAINT / CREATE INDEX /
- * idempotent back-fill) - see drizzle/0001_self_service_listing.sql.
+ * The runner applies a migration only after checking journal history and
+ * verifying that no migration-owned schema objects already exist without the
+ * matching immutable file hash. A no-journal 0000 baseline candidate can be
+ * recorded without DDL only after recognized object and column names pass;
+ * partial or later unjournaled schemas fail closed and need human
+ * reconciliation. Nothing is dropped, truncated or reset, but migrations may
+ * include data updates or tighten nullability; review each SQL file and its
+ * data/lock preconditions before applying.
  *
  * Usage
  * -----
@@ -44,8 +41,9 @@
  * without a database keep working); if it is set but unreachable the build
  * fails loudly instead of shipping a broken deployment.
  *
- * Exit codes: 0 = schema up to date / repaired, 1 = error (nothing half-applied:
- * each migration runs inside a transaction when the server supports it).
+ * Exit codes: 0 = safe plan/schema verification completed, 1 = refused or failed
+ * (each DDL migration runs in a PostgreSQL transaction; a baseline-only journal
+ * record is written only after its recognized object/column-name signature passes).
  */
 
 import "dotenv/config";
@@ -54,6 +52,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { migrationObjectMarker, migrationObjectMarkers } from "./migration-markers.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..", "..");
@@ -64,13 +63,31 @@ const APPLY = process.argv.includes("--apply");
 
 /** Tables created by the baseline migration 0000_spicy_violations. */
 const BASELINE_TABLES = ["admins", "builders", "leads", "properties", "property_images"];
-/** Minimal signature used to prove the DB really sits at the 0000 baseline. */
+/** Column-name signature for the full 0000 baseline, not a data assertion. */
 const BASELINE_SIGNATURE = {
-  admins: ["id", "email", "password_hash"],
-  builders: ["id", "name", "slug", "password_hash"],
-  leads: ["id", "property_id"],
-  properties: ["id", "builder_id", "slug", "price", "is_active"],
-  property_images: ["id", "property_id", "image_url"],
+  admins: ["id", "name", "email", "password_hash", "role", "created_at"],
+  builders: [
+    "id", "name", "slug", "email", "phone", "password_hash", "description",
+    "logo", "website", "address", "experience_years", "projects_count",
+    "is_active", "is_verified", "created_at", "updated_at",
+  ],
+  leads: [
+    "id", "name", "phone", "email", "budget", "preferred_location",
+    "property_id", "property_type", "message", "source", "status",
+    "assigned_builder_id", "created_at",
+  ],
+  properties: [
+    "id", "builder_id", "title", "slug", "description", "property_type",
+    "status", "furnishing", "price", "price_per_sqft", "area", "bedrooms",
+    "bathrooms", "balconies", "floor", "total_floors", "facing", "address",
+    "location", "city", "state", "pincode", "latitude", "longitude",
+    "amenities", "highlights", "rera_id", "is_featured", "is_active",
+    "views", "created_at", "updated_at",
+  ],
+  property_images: [
+    "id", "property_id", "image_url", "alt_text", "is_cover", "sort_order",
+    "created_at",
+  ],
 };
 
 const log = (...a) => console.log(...a);
@@ -83,15 +100,25 @@ const heading = (t) => log("\n### " + t);
 function expectedObjects(migrations) {
   const columns = {};
   const enums = {};
+  const nullability = {};
+  const indexes = new Set();
   for (const m of migrations.filter((m) => m.idx !== 0)) {
     for (const stmt of m.statements) {
       const col = stmt.match(/^ALTER TABLE "(\w+)" ADD COLUMN "(\w+)"/);
       if (col) (columns[col[1]] ??= []).push(col[2]);
       const en = stmt.match(/^CREATE TYPE "public"\."(\w+)" AS ENUM\(([^)]*)\)/);
       if (en) enums[en[1]] = en[2].split(",").map((v) => v.trim().replace(/^'|'$/g, ""));
+      const nullable = stmt.match(
+        /^ALTER TABLE "(\w+)" ALTER COLUMN "(\w+)" (DROP|SET) NOT NULL/
+      );
+      if (nullable) {
+        nullability[`${nullable[1]}.${nullable[2]}`] = nullable[3] === "DROP";
+      }
+      const index = stmt.match(/^CREATE (?:UNIQUE )?INDEX "(\w+)"/);
+      if (index) indexes.add(index[1]);
     }
   }
-  return { columns, enums };
+  return { columns, enums, nullability, indexes: [...indexes] };
 }
 
 function readJournal() {
@@ -146,6 +173,53 @@ async function main() {
     return r.rows.map((x) => x.column_name);
   };
 
+  const migrationMarkerExists = async (marker) => {
+    let r;
+    switch (marker.kind) {
+      case "type":
+        r = await pool.query("select to_regtype($1) as object", [`public.${marker.name}`]);
+        return Boolean(r.rows[0].object);
+      case "table":
+        r = await pool.query("select to_regclass($1) as object", [`public.${marker.name}`]);
+        return Boolean(r.rows[0].object);
+      case "column":
+        r = await pool.query(
+          "select 1 from information_schema.columns where table_schema='public' and table_name=$1 and column_name=$2",
+          [marker.table, marker.name]
+        );
+        return r.rowCount > 0;
+      case "constraint":
+        r = await pool.query(
+          "select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname='public' and t.relname=$1 and c.conname=$2",
+          [marker.table, marker.name]
+        );
+        return r.rowCount > 0;
+      case "index":
+        r = await pool.query(
+          "select 1 from pg_indexes where schemaname='public' and indexname=$1",
+          [marker.name]
+        );
+        return r.rowCount > 0;
+      case "nullability":
+        r = await pool.query(
+          "select is_nullable from information_schema.columns where table_schema='public' and table_name=$1 and column_name=$2",
+          [marker.table, marker.column]
+        );
+        return r.rowCount > 0 && (r.rows[0].is_nullable === "YES") === marker.nullable;
+      default:
+        throw new Error(`No schema inspection is defined for marker kind: ${marker.kind}`);
+    }
+  };
+
+  const describeMarker = (marker) => {
+    if (marker.kind === "column") return `${marker.table}.${marker.name}`;
+    if (marker.kind === "constraint") return `${marker.table}.${marker.name}`;
+    if (marker.kind === "nullability") {
+      return `${marker.table}.${marker.column} ${marker.nullable ? "DROP" : "SET"} NOT NULL`;
+    }
+    return `${marker.kind} ${marker.name}`;
+  };
+
   try {
     const db = await pool.query("select current_database() as db, inet_server_addr() as host");
     heading("target");
@@ -160,6 +234,37 @@ async function main() {
     if (journalExists) {
       const r = await pool.query("select id, hash, created_at from drizzle.__drizzle_migrations order by id");
       applied = r.rows;
+    }
+
+    // Journal hashes are the immutable migration identities. Never rewrite or
+    // guess them: an unknown hash, duplicate, or non-prefix history needs a
+    // human schema review rather than an automatic repair.
+    const knownHashes = new Set(migrations.map((m) => m.hash));
+    const unknownHashes = applied.filter((row) => !knownHashes.has(row.hash));
+    if (unknownHashes.length) {
+      throw new Error(
+        `Refusing to migrate: the database journal contains ${unknownHashes.length} hash(es) that do not match the checked-in migrations. ` +
+          `Do not edit or replace recorded hashes; inspect the database and migration history manually.`
+      );
+    }
+    const appliedFrequency = new Map();
+    for (const row of applied) {
+      appliedFrequency.set(row.hash, (appliedFrequency.get(row.hash) ?? 0) + 1);
+    }
+    const duplicateHashes = [...appliedFrequency.entries()].filter(([, count]) => count > 1);
+    if (duplicateHashes.length) {
+      throw new Error(
+        `Refusing to migrate: the journal contains duplicate migration hash(es) (${duplicateHashes.map(([hash]) => hash.slice(0, 8)).join(", ")}). ` +
+          `Reconcile the journal manually without changing recorded hashes.`
+      );
+    }
+
+    const expectedJournalHashes = migrations.slice(0, applied.length).map((m) => m.hash);
+    if (applied.some((row, index) => row.hash !== expectedJournalHashes[index])) {
+      throw new Error(
+        `Refusing to migrate: recorded hashes are not an ordered prefix of the checked-in journal. ` +
+          `Reconcile the schema and journal manually; the runner will not infer missing history.`
+      );
     }
 
     const existingTables = [];
@@ -203,6 +308,17 @@ async function main() {
         plan.push({ m, action: "skip", reason: "already recorded in journal" });
         continue;
       }
+      const unrecognizedDdl = m.statements.filter((stmt) => {
+        const trimmed = stmt.trim();
+        return /^(CREATE|ALTER|DROP|TRUNCATE|RENAME|COMMENT|GRANT|REVOKE)\b/i.test(trimmed) && !migrationObjectMarker(stmt);
+      });
+      if (unrecognizedDdl.length) {
+        throw new Error(
+          `Refusing to apply ${m.tag}: the runner has no partial-schema safety marker for DDL statement(s): ` +
+            unrecognizedDdl.map((stmt) => stmt.split("\n")[0].slice(0, 120)).join("; ") +
+            `. Add an explicit schema inspection before applying this migration.`
+        );
+      }
       if (m.idx === 0 && baselinePresent) {
         // The schema was created by `drizzle-kit push`: it already is at the
         // 0000 baseline. Record it instead of re-running it (its CREATE
@@ -217,10 +333,78 @@ async function main() {
             );
           }
         }
-        plan.push({ m, action: "record-only", reason: "baseline schema already present (push-created DB)" });
+        const missingBaselineObjects = [];
+        for (const marker of migrationObjectMarkers(m.statements)) {
+          if (!(await migrationMarkerExists(marker))) {
+            missingBaselineObjects.push(describeMarker(marker));
+          }
+        }
+        if (missingBaselineObjects.length) {
+          throw new Error(
+            `Refusing to mark ${m.tag} as applied: the push-created baseline is missing schema object(s) ${missingBaselineObjects.join(", ")}. ` +
+              `Restore/repair it through a reviewed migration; do not infer that it is complete.`
+          );
+        }
+        plan.push({ m, action: "record-only", reason: "recognized baseline object/column names already present (push-created DB)" });
         continue;
       }
-      plan.push({ m, action: "apply", reason: "not yet applied" });
+
+      const alreadyPresent = [];
+      const markers = migrationObjectMarkers(m.statements);
+      for (const marker of markers) {
+        const earlierPendingNullabilityChange =
+          marker.kind === "nullability" &&
+          plan.some(
+            (previous) =>
+              previous.action !== "skip" &&
+              migrationObjectMarkers(previous.m.statements).some(
+                (earlier) =>
+                  earlier.kind === "nullability" &&
+                  earlier.table === marker.table &&
+                  earlier.column === marker.column
+              )
+          );
+        if (earlierPendingNullabilityChange) continue;
+        if (await migrationMarkerExists(marker)) alreadyPresent.push(describeMarker(marker));
+      }
+      if (alreadyPresent.length) {
+        throw new Error(
+          `Refusing to apply unrecorded migration ${m.tag}: schema object(s) already exist (${alreadyPresent.join(", ")}). ` +
+            `This may be a partially applied or schema-pushed migration. Do not rerun or journal it automatically; compare the live schema with ` +
+            `the migration, inspect data effects, and prepare an explicitly reviewed recovery/forward migration.`
+        );
+      }
+      for (const marker of markers.filter(
+        (item) => item.kind === "nullability" && !item.nullable
+      )) {
+        const earlierPendingNullabilityChange = plan.some(
+          (previous) =>
+            previous.action !== "skip" &&
+            migrationObjectMarkers(previous.m.statements).some(
+              (earlier) =>
+                earlier.kind === "nullability" &&
+                earlier.table === marker.table &&
+                earlier.column === marker.column
+            )
+        );
+        if (earlierPendingNullabilityChange) continue;
+        const have = await columnsOf(marker.table);
+        if (!have.includes(marker.column)) {
+          throw new Error(
+            `Refusing to apply ${m.tag}: required column ${marker.table}.${marker.column} is missing.`
+          );
+        }
+        const nulls = await pool.query(
+          `select count(*)::text as n from public."${marker.table}" where "${marker.column}" is null`
+        );
+        if (nulls.rows[0].n !== "0") {
+          throw new Error(
+            `Refusing to apply ${m.tag}: ${marker.table}.${marker.column} contains ${nulls.rows[0].n} NULL row(s). ` +
+              `Resolve them from verified account data and review the lock window before tightening nullability.`
+          );
+        }
+      }
+      plan.push({ m, action: "apply", reason: "not yet applied; no migration-owned schema objects found" });
     }
 
     heading("plan");
@@ -265,6 +449,19 @@ async function main() {
       const client = await pool.connect();
       try {
         await client.query("begin");
+        for (const marker of migrationObjectMarkers(m.statements).filter(
+          (item) => item.kind === "nullability" && !item.nullable
+        )) {
+          const nulls = await client.query(
+            `select count(*)::text as n from public."${marker.table}" where "${marker.column}" is null`
+          );
+          if (nulls.rows[0].n !== "0") {
+            throw new Error(
+              `${m.tag} requires ${marker.table}.${marker.column} to be NOT NULL, but ${nulls.rows[0].n} NULL row(s) remain. ` +
+                `Resolve them from verified data and review the lock window first.`
+            );
+          }
+        }
         for (const stmt of m.statements) {
           try {
             await client.query(stmt);
@@ -292,7 +489,12 @@ async function main() {
 
 async function verify(pool, migrations) {
   heading("verification");
-  const { columns: EXPECTED_COLUMNS, enums: EXPECTED_ENUMS } = expectedObjects(migrations ?? readJournal());
+  const {
+    columns: EXPECTED_COLUMNS,
+    enums: EXPECTED_ENUMS,
+    nullability: EXPECTED_NULLABILITY,
+    indexes: EXPECTED_INDEXES,
+  } = expectedObjects(migrations ?? readJournal());
   let ok = true;
   for (const [table, cols] of Object.entries(EXPECTED_COLUMNS)) {
     const r = await pool.query(
@@ -304,6 +506,17 @@ async function verify(pool, migrations) {
     log(`${table}: ${missing.length ? "MISSING " + missing.join(", ") : `all ${cols.length} required columns present`}`);
     if (missing.length) ok = false;
   }
+  for (const [qualifiedColumn, nullable] of Object.entries(EXPECTED_NULLABILITY)) {
+    const [table, column] = qualifiedColumn.split(".");
+    const r = await pool.query(
+      "select is_nullable from information_schema.columns where table_schema='public' and table_name=$1 and column_name=$2",
+      [table, column]
+    );
+    const found = r.rows[0];
+    const good = Boolean(found) && (found.is_nullable === "YES") === nullable;
+    log(`${qualifiedColumn}: ${good ? (nullable ? "nullable" : "NOT NULL") : "NULLABILITY MISMATCH/MISSING"}`);
+    if (!good) ok = false;
+  }
   const enums = await pool.query(
     "select t.typname, string_agg(e.enumlabel, ',' order by e.enumsortorder) as vals from pg_type t join pg_enum e on e.enumtypid = t.oid group by 1"
   );
@@ -313,10 +526,20 @@ async function verify(pool, migrations) {
     log(`enum ${name}: ${good ? "ok (" + found.vals + ")" : "MISSING/WRONG"}`);
     if (!good) ok = false;
   }
-  const idx = await pool.query(
-    "select indexname from pg_indexes where schemaname='public' and indexname like 'properties_%' or indexname like 'builders_%' or indexname like 'leads_%' order by 1"
+  const indexes = await pool.query(
+    "select c.relname as indexname, i.indisvalid, i.indisready from pg_index i join pg_class c on c.oid=i.indexrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname = any($1::text[])",
+    [EXPECTED_INDEXES]
   );
-  log("indexes: " + (idx.rows.map((r) => r.indexname).join(", ") || "(none)"));
+  for (const name of EXPECTED_INDEXES) {
+    const found = indexes.rows.find((row) => row.indexname === name);
+    const good = found && found.indisvalid && found.indisready;
+    log(`index ${name}: ${good ? "valid and ready" : "MISSING/INVALID"}`);
+    if (!good) ok = false;
+  }
+  const idx = await pool.query(
+    "select indexname from pg_indexes where schemaname='public' and (indexname like 'properties_%' or indexname like 'builders_%' or indexname like 'leads_%') order by 1"
+  );
+  log("related indexes: " + (idx.rows.map((r) => r.indexname).join(", ") || "(none)"));
   const jr = await pool.query("select id, hash, created_at from drizzle.__drizzle_migrations order by id");
   log("journal now: " + jr.rows.map((r) => `${r.id}:${r.hash.slice(0, 8)}`).join(", "));
   log(ok ? "\nRESULT: schema is up to date." : "\nRESULT: verification FAILED.");

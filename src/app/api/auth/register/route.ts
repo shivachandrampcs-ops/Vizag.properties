@@ -80,15 +80,12 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, user: result.user });
-  } catch (err) {
-    console.error("Registration error:", err);
+  } catch {
+    console.error("Registration request failed");
     return NextResponse.json(
       {
         success: false,
-        error:
-          err instanceof Error
-            ? err.message
-            : "Could not create your account. Please try again.",
+        error: "Could not create your account. Please try again.",
       },
       { status: 500 }
     );

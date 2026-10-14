@@ -1,18 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { FloatingContact } from "@/components/floating-contact";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { SITE_CONFIG } from "@/lib/utils";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -24,7 +17,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_CONFIG.url),
   title: {
-    default: `${SITE_CONFIG.name} | Verified Properties in Visakhapatnam`,
+    default: `${SITE_CONFIG.name} | Property Listings in Visakhapatnam`,
     template: `%s | ${SITE_CONFIG.name}`,
   },
   description: SITE_CONFIG.description,
@@ -38,7 +31,7 @@ export const metadata: Metadata = {
     "Commercial Properties in Vizag",
     "Property for Sale in Vizag",
     "Visakhapatnam Real Estate",
-    "Verified Builders in Vizag",
+    "Property Listings in Vizag",
     "Flats in Visakhapatnam",
   ],
   authors: [{ name: SITE_CONFIG.name }],
@@ -57,7 +50,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: SITE_CONFIG.url,
     siteName: SITE_CONFIG.name,
-    title: `${SITE_CONFIG.name} | Verified Properties in Visakhapatnam`,
+    title: `${SITE_CONFIG.name} | Property Listings in Visakhapatnam`,
     description: SITE_CONFIG.description,
     images: [
       {
@@ -70,7 +63,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_CONFIG.name} | Verified Properties in Visakhapatnam`,
+    title: `${SITE_CONFIG.name} | Property Listings in Visakhapatnam`,
     description: SITE_CONFIG.description,
     images: ["/og-image.jpg"],
   },
@@ -93,7 +86,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -108,19 +101,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "RealEstateAgent",
+              "@type": "Organization",
               name: SITE_CONFIG.name,
               url: SITE_CONFIG.url,
               logo: `${SITE_CONFIG.url}/logo.png`,
               description: SITE_CONFIG.description,
               telephone: SITE_CONFIG.phoneRaw,
               email: SITE_CONFIG.email,
-              address: {
-                "@type": "PostalAddress",
-                addressLocality: "Visakhapatnam",
-                addressRegion: "Andhra Pradesh",
-                addressCountry: "IN",
-              },
               areaServed: {
                 "@type": "City",
                 name: "Visakhapatnam",

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { isValidIndianMobile } from "./phone";
+import { PROPERTY_AREA_UNITS } from "./area-units";
 import {
   MAX_LISTING_TAGS,
   MAX_LISTING_TAG_LENGTH,
@@ -17,10 +19,19 @@ export const leadSchema = z.object({
     .max(100, "Name is too long"),
   phone: z
     .string()
-    .min(10, "Please enter a valid phone number")
-    .max(20, "Phone number is too long")
-    .regex(/^[+\d\s()-]+$/, "Please enter a valid phone number"),
-  email: z.string().email("Please enter a valid email address"),
+    .trim()
+    .min(1, "Mobile number is required")
+    .max(20, "Mobile number is too long")
+    .refine(
+      isValidIndianMobile,
+      "Enter a valid Indian mobile number, e.g. 9876543210 or +91 98765 43210"
+    ),
+  email: z
+    .string()
+    .trim()
+    .email("Please enter a valid email address")
+    .optional()
+    .or(z.literal("")),
   budget: z.string().max(100).optional().or(z.literal("")),
   preferredLocation: z.string().max(200).optional().or(z.literal("")),
   propertyId: z.coerce.number().int().positive().optional().nullable(),
@@ -39,19 +50,46 @@ export type LeadInput = z.infer<typeof leadSchema>;
 // AUTH
 // ────────────────────────────────────────────────────────────
 
+const emailAddress = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email("Please enter a valid email address")
+  .max(200, "Email address is too long");
+
+/** Email and password are the credentials for all account roles. */
 export const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
+  email: emailAddress,
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
+/** Backwards-compatible schema name for seller login forms. */
+export const sellerLoginSchema = loginSchema;
+
+export type SellerLoginInput = z.infer<typeof sellerLoginSchema>;
+
 const indianPhone = z
   .string()
   .trim()
-  .min(10, "Please enter a valid mobile number")
-  .max(15, "Mobile number is too long")
-  .regex(/^\+?\d[\d\s()-]{8,13}\d$/, "Please enter a valid mobile number");
+  .min(1, "Mobile number is required")
+  .max(20, "Mobile number is too long")
+  .refine(
+    isValidIndianMobile,
+    "Enter a valid Indian mobile number, e.g. 9876543210 or +91 98765 43210"
+  );
+
+const optionalIndianPhone = z
+  .string()
+  .trim()
+  .max(20, "Mobile number is too long")
+  .optional()
+  .or(z.literal(""))
+  .refine(
+    (value) => !value || isValidIndianMobile(value),
+    "Enter a valid Indian mobile number, e.g. 9876543210 or +91 98765 43210"
+  );
 
 /** Self-service registration for Builders, Property Owners and Agents. */
 export const registrationSchema = z
@@ -70,14 +108,9 @@ export const registrationSchema = z
       .max(200, "Company name is too long")
       .optional()
       .or(z.literal("")),
-    email: z.string().trim().email("Please enter a valid email address"),
+    email: emailAddress,
     mobile: indianPhone,
-    whatsapp: z
-      .string()
-      .trim()
-      .max(15, "WhatsApp number is too long")
-      .optional()
-      .or(z.literal("")),
+    whatsapp: optionalIndianPhone,
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
@@ -162,6 +195,7 @@ export const propertySchema = z.object({
   price: z.coerce.number().int().positive("Price must be positive"),
   pricePerSqft: z.coerce.number().int().positive().optional().nullable(),
   area: z.coerce.number().int().positive("Area must be positive"),
+  areaUnit: z.enum(PROPERTY_AREA_UNITS).nullable().optional(),
   bedrooms: z.coerce.number().int().min(0).default(0),
   bathrooms: z.coerce.number().int().min(0).default(0),
   balconies: z.coerce.number().int().min(0).default(0),
@@ -322,15 +356,14 @@ export const sellerProfileSchema = z.object({
   phone: z
     .string()
     .trim()
-    .min(10, "Please enter a valid phone number")
-    .max(20, "Phone number is too long"),
-  whatsappNumber: z
-    .string()
-    .trim()
-    .max(20, "WhatsApp number is too long")
-    .optional()
-    .or(z.literal("")),
-  email: z.string().trim().email("Please enter a valid email address"),
+    .min(1, "Mobile number is required")
+    .max(20, "Mobile number is too long")
+    .refine(
+      isValidIndianMobile,
+      "Enter a valid Indian mobile number, e.g. 9876543210 or +91 98765 43210"
+    ),
+  whatsappNumber: optionalIndianPhone,
+  email: emailAddress,
   locality: z
     .string()
     .trim()

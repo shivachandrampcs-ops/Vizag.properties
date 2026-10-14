@@ -8,6 +8,8 @@ import {
 import { and, desc, eq, sql, ilike, or, count, inArray } from "drizzle-orm";
 import { createPropertySlug, createSlug } from "./slug";
 import { normalizePublisherType } from "./publishers";
+import { vizagLocationSearchValues } from "./locations";
+import type { PropertyAreaUnit } from "./area-units";
 
 export { createSlug, createPropertySlug };
 
@@ -55,6 +57,7 @@ export type PropertyWithRelations = {
   price: number;
   pricePerSqft: number | null;
   area: number;
+  areaUnit: "sqft" | "sqyd" | null;
   bedrooms: number | null;
   bathrooms: number | null;
   balconies: number | null;
@@ -233,6 +236,9 @@ export type PropertyFilters = {
   status?: string;
   minPrice?: number;
   maxPrice?: number;
+  minArea?: number;
+  maxArea?: number;
+  areaUnit?: PropertyAreaUnit;
   bedrooms?: number;
 };
 
@@ -251,7 +257,14 @@ export async function getProperties(filters: PropertyFilters = {}) {
     );
   }
   if (filters.location) {
-    conditions.push(eq(properties.location, filters.location));
+    const candidates = vizagLocationSearchValues(filters.location);
+    conditions.push(
+      or(
+        ...candidates.map(
+          (location) => sql`lower(${properties.location}) = lower(${location})`
+        )
+      )!
+    );
   }
   if (filters.propertyType) {
     conditions.push(
@@ -266,6 +279,18 @@ export async function getProperties(filters: PropertyFilters = {}) {
   }
   if (filters.maxPrice !== undefined) {
     conditions.push(sql`${properties.price} <= ${filters.maxPrice}`);
+  }
+  if (filters.areaUnit && (filters.minArea !== undefined || filters.maxArea !== undefined)) {
+    // Unit equality is mandatory: values from sqft and sqyd listings are never
+    // compared as though they were interchangeable. Legacy rows with null units
+    // are intentionally omitted from explicit area-range results.
+    conditions.push(eq(properties.areaUnit, filters.areaUnit));
+    if (filters.minArea !== undefined) {
+      conditions.push(sql`${properties.area} >= ${filters.minArea}`);
+    }
+    if (filters.maxArea !== undefined) {
+      conditions.push(sql`${properties.area} <= ${filters.maxArea}`);
+    }
   }
   if (filters.bedrooms !== undefined) {
     conditions.push(eq(properties.bedrooms, filters.bedrooms));
