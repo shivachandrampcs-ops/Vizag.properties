@@ -2,14 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   propertySchema,
   toStringList,
   type PropertyInput,
 } from "@/lib/validations";
-import { VIZAG_LOCATIONS, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import {
+  defaultAreaUnitForType,
+  propertyAreaFieldLabel,
+  type PropertyAreaUnit,
+} from "@/lib/area-units";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
 import { ImageUploader, type UploadedImageValue } from "@/components/image-uploader";
 import {
   Save,
@@ -105,6 +111,8 @@ export function PropertyForm({
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(propertySchema),
@@ -118,6 +126,11 @@ export function PropertyForm({
       price: initial?.price ?? 0,
       pricePerSqft: initial?.pricePerSqft ?? undefined,
       area: initial?.area ?? 0,
+      areaUnit:
+        initial?.areaUnit ??
+        (propertyId
+          ? null
+          : defaultAreaUnitForType(initial?.propertyType ?? "apartment")),
       bedrooms: initial?.bedrooms ?? 0,
       bathrooms: initial?.bathrooms ?? 0,
       balconies: initial?.balconies ?? 0,
@@ -142,6 +155,20 @@ export function PropertyForm({
       highlights: initial?.highlights ?? "",
     } as never,
   });
+
+  const selectedPropertyType = useWatch({
+    control,
+    name: "propertyType",
+  }) as PropertyInput["propertyType"];
+  const selectedAreaUnit = useWatch({ control, name: "areaUnit" }) as
+    | PropertyAreaUnit
+    | null
+    | undefined;
+  const areaFieldLabel = propertyAreaFieldLabel(
+    selectedPropertyType ?? "apartment",
+    selectedAreaUnit
+  );
+  const isLegacyAreaUnitUnknown = Boolean(propertyId && initial?.areaUnit == null);
 
   async function onSubmit(data: Record<string, unknown>, intent: "draft" | "submit") {
     if (images.length === 0) {
@@ -291,8 +318,20 @@ export function PropertyForm({
         <div className="grid sm:grid-cols-3 gap-4">
           <div>
             <Label required>Property Type</Label>
-            <select {...register("propertyType")} className={inputClass}>
-              <option value="apartment">Apartment</option>
+            <select
+              {...register("propertyType", {
+                onChange: (event) => {
+                  const nextType = event.target.value as PropertyInput["propertyType"];
+                  setValue("area", 0, { shouldDirty: true, shouldValidate: true });
+                  setValue("areaUnit", defaultAreaUnitForType(nextType), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                },
+              })}
+              className={inputClass}
+            >
+              <option value="apartment">Flat / Apartment</option>
               <option value="villa">Villa</option>
               <option value="plot">Plot</option>
               <option value="independent_house">Independent House</option>
@@ -338,7 +377,7 @@ export function PropertyForm({
             )}
           </div>
           <div>
-            <Label>Price per sqft (₹)</Label>
+            <Label>Price per sq. ft. (₹)</Label>
             <input
               type="number"
               {...register("pricePerSqft")}
@@ -347,17 +386,52 @@ export function PropertyForm({
             />
           </div>
           <div>
-            <Label required>Area (sqft)</Label>
+            <Label required>{areaFieldLabel}</Label>
+            <input type="hidden" {...register("areaUnit")} />
             <input
               type="number"
+              min={1}
+              step={1}
               {...register("area")}
               className={cn(inputClass, errors.area && "border-red-300")}
-              placeholder="1500"
+              placeholder="Enter area"
+              aria-label={areaFieldLabel}
+              aria-invalid={Boolean(errors.area)}
             />
             {errors.area && (
               <p className="mt-1 text-xs text-red-600">
                 {errors.area.message as string}
               </p>
+            )}
+            {isLegacyAreaUnitUnknown && (
+              <div className="mt-2 space-y-2">
+                <p className="text-xs text-amber-800">
+                  This existing listing has no recorded area unit. Its number is
+                  preserved as-is until you confirm the original unit.
+                </p>
+                <label className="block text-xs font-medium text-slate-600">
+                  Set unit only after checking the source value
+                  <select
+                    value={selectedAreaUnit ?? ""}
+                    onChange={(event) => {
+                      const value = event.target.value as PropertyAreaUnit | "";
+                      setValue("area", 0, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      setValue("areaUnit", value || null, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                    className={cn(inputClass, "mt-1")}
+                  >
+                    <option value="">Leave unit unrecorded</option>
+                    <option value="sqft">Square feet (sq. ft.)</option>
+                    <option value="sqyd">Square yards (sq. yd.)</option>
+                  </select>
+                </label>
+              </div>
             )}
           </div>
           <div>
@@ -441,17 +515,13 @@ export function PropertyForm({
         <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <Label required>Area / Locality</Label>
-            <select
+            <LocationAutocomplete
+              id="property-location"
+              suggestionsId="property-location-options"
               {...register("location")}
               className={cn(inputClass, errors.location && "border-red-300")}
-            >
-              <option value="">Select</option>
-              {VIZAG_LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-            </select>
+              placeholder="Type to search localities"
+            />
             {errors.location && (
               <p className="mt-1 text-xs text-red-600">
                 {errors.location.message as string}
@@ -531,7 +601,7 @@ export function PropertyForm({
               type="text"
               {...register("reraId")}
               className={inputClass}
-              placeholder="APRERA/REG/2024/001234"
+              placeholder="Enter the ID exactly as shown on the official record"
             />
           </div>
           <div>
@@ -563,7 +633,7 @@ export function PropertyForm({
             type="text"
             {...register("highlights")}
             className={inputClass}
-            placeholder="Ready to move-in, RERA registered, Premium fittings"
+            placeholder="Ready to move, clubhouse, road access"
           />
         </div>
       </Section>

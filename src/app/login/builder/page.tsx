@@ -9,8 +9,8 @@ import { Home, ArrowLeft, Building2 } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Builder Login | Vizag Properties",
-  description: "Login to your Vizag Properties builder account to manage your property listings and view leads.",
+  title: "Seller Login | Vizag Properties",
+  description: "Sign in to your Vizag Properties seller account with your email and password to manage listings and enquiries.",
   robots: {
     index: false,
     follow: false,
@@ -45,23 +45,18 @@ export default async function BuilderLoginPage() {
               <Building2 className="h-7 w-7" />
             </div>
             <h1 className="mt-4 text-2xl font-bold text-slate-900">
-              Builder Login
+              Seller Login
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Access your builder dashboard
+              Sign in to your builder, owner or agent dashboard with your email
             </p>
           </div>
           <div className="mt-6">
             <BuilderLoginForm />
           </div>
-          <div className="mt-6 pt-6 border-t border-slate-200 text-center">
-            <p className="text-xs text-slate-500">
-              Demo credentials:
-            </p>
-            <p className="mt-1 text-xs font-mono text-slate-700">
-              contact@sravanthi.com / Builder@123
-            </p>
-          </div>
+          <p className="mt-6 pt-6 border-t border-slate-200 text-center text-xs text-slate-500">
+            Sign in with the email and password associated with your account.
+          </p>
         </div>
         <p className="mt-6 text-center text-sm text-slate-600">
           New here?{" "}

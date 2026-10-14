@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   registrationSchema,
   type RegistrationInput,
 } from "@/lib/validations";
-import { cn, VIZAG_LOCATIONS } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
 import {
   AlertCircle,
   Loader2,
@@ -192,10 +194,13 @@ export function RegistrationForm({
           <Label required>Email</Label>
           <input
             type="email"
+            inputMode="email"
             autoComplete="email"
+            required
             {...register("email")}
             className={cn(inputClass, errors.email && "border-red-300")}
             placeholder="you@example.com"
+            aria-invalid={Boolean(errors.email)}
           />
           {errors.email && (
             <p className="mt-1 text-xs text-red-600">
@@ -204,14 +209,16 @@ export function RegistrationForm({
           )}
         </div>
         <div>
-          <Label required>Mobile Number</Label>
+          <Label required>Mobile Number (contact only)</Label>
           <input
             type="tel"
             inputMode="tel"
             autoComplete="tel"
+            maxLength={20}
             {...register("mobile")}
             className={cn(inputClass, errors.mobile && "border-red-300")}
             placeholder="+91 98765 43210"
+            aria-invalid={Boolean(errors.mobile)}
           />
           {errors.mobile && (
             <p className="mt-1 text-xs text-red-600">
@@ -236,14 +243,13 @@ export function RegistrationForm({
         </div>
         <div>
           <Label>Locality</Label>
-          <select {...register("locality")} className={inputClass}>
-            <option value="">Select locality (optional)</option>
-            {VIZAG_LOCATIONS.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
-              </option>
-            ))}
-          </select>
+          <LocationAutocomplete
+            id="registration-locality"
+            suggestionsId="registration-locality-options"
+            {...register("locality")}
+            className={inputClass}
+            placeholder="Type to search localities"
+          />
         </div>
       </div>
 
@@ -333,10 +339,25 @@ export function RegistrationForm({
         )}
       </button>
 
-      <p className="text-xs text-slate-500 text-center">
-        By creating an account you agree that submitted properties will be
-        reviewed by the Vizag Properties team before going live.
-      </p>
+      <div className="space-y-2 text-xs text-slate-500 text-center">
+        <p>
+          Use your email and password to sign in. The mobile number is stored as
+          contact information and is not used for authentication. Public signup
+          creates seller accounts only; admin access is assigned separately.
+        </p>
+        <p>
+          By creating an account, you agree to the{" "}
+          <Link href="/terms-and-conditions" className="font-semibold text-brand-600 underline">
+            Terms &amp; Conditions
+          </Link>{" "}
+          and acknowledge the{" "}
+          <Link href="/privacy-policy" className="font-semibold text-brand-600 underline">
+            Privacy Policy
+          </Link>
+          . Submitted property listings are reviewed for publication; review is
+          not a title or legal verification.
+        </p>
+      </div>
     </form>
   );
 }

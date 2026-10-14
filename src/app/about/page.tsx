@@ -8,7 +8,7 @@ import {
   Award,
   Users,
   Shield,
-  CheckCircle2,
+  MapPin,
   TrendingUp,
   Sparkles,
   ArrowRight,
@@ -21,19 +21,19 @@ import { SITE_CONFIG } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "About Vizag Properties | Trusted Real Estate in Visakhapatnam",
+  title: "About Vizag Properties | Property Listings in Visakhapatnam",
   description:
-    "Vizag Properties is a trusted real estate platform helping property buyers discover verified apartments, villas, plots and commercial properties in Visakhapatnam. Learn about our mission, vision and team.",
+    "Learn about Vizag Properties, an online property listing and enquiry service for Visakhapatnam and nearby areas.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/about`,
   },
 };
 
 const stats = [
-  { value: "500+", label: "Verified Properties" },
-  { value: "50+", label: "Trusted Builders" },
-  { value: "2000+", label: "Happy Customers" },
-  { value: "15+", label: "Areas Covered" },
+  { value: "3", label: "Seller account roles" },
+  { value: "6", label: "Property categories" },
+  { value: "112", label: "Locality search suggestions" },
+  { value: "2", label: "Area units supported" },
 ];
 
 const values = [
@@ -41,25 +41,25 @@ const values = [
     icon: Shield,
     title: "Trust & Transparency",
     description:
-      "We believe in 100% transparency. Every property is personally verified and every interaction is honest.",
+      "Listings are supplied by account holders and may be reviewed for platform rules. Review is not title, RERA or construction verification.",
   },
   {
     icon: Heart,
     title: "Customer First",
     description:
-      "Your dream home is our mission. We go above and beyond to make property buying simple and stress-free.",
+      "Use the search and enquiry features to explore listings and contact the operator about your requirements.",
   },
   {
     icon: Award,
-    title: "Quality Always",
+    title: "Independent Checks",
     description:
-      "We partner only with reputed, RERA-registered builders and showcase only quality properties.",
+      "Builders, property owners and agents can submit listings. Buyers should independently confirm seller claims and applicable registrations.",
   },
   {
     icon: Sparkles,
-    title: "Innovation",
+    title: "Search Tools",
     description:
-      "We leverage technology to make property discovery and consultation seamless and modern.",
+      "Use search, filters and locality suggestions to browse the listings currently available on the site.",
   },
 ];
 
@@ -69,7 +69,7 @@ export default function AboutPage() {
     "@type": "AboutPage",
     name: "About Vizag Properties",
     description:
-      "Learn about Vizag Properties - a trusted real estate platform helping property buyers in Visakhapatnam.",
+      "Learn about Vizag Properties, an online property listing and enquiry service for Visakhapatnam.",
     url: `${SITE_CONFIG.url}/about`,
   };
 
@@ -96,13 +96,13 @@ export default function AboutPage() {
               About Vizag Properties
             </div>
             <h1 className="mt-5 text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              Vizag&apos;s Most Trusted
+              Property Listings
               <br />
-              Property Platform
+              &amp; Enquiries in Vizag
             </h1>
             <p className="mt-5 text-lg md:text-xl text-slate-200">
-              We are on a mission to make property buying in Visakhapatnam
-              simple, transparent and trustworthy for every family.
+              Browse seller-submitted listings and send property enquiries
+              for Visakhapatnam and nearby areas.
             </p>
           </div>
         </div>
@@ -133,28 +133,30 @@ export default function AboutPage() {
                 Who We Are
               </div>
               <h2 className="mt-2 text-3xl md:text-4xl font-bold text-slate-900">
-                Your Local Vizag Property Partner
+                Property Listings &amp; Enquiries for Vizag
               </h2>
               <div className="mt-5 space-y-4 text-slate-700 leading-relaxed">
                 <p>
                   <strong className="text-slate-900">Vizag Properties</strong>{" "}
-                  is a Visakhapatnam-based real estate discovery and
-                  consultation platform built with a simple mission - to make
-                  property buying in Vizag easy, transparent and trustworthy.
+                  is an online property listing and enquiry service for
+                  Visakhapatnam and nearby areas. The site lets visitors search
+                  listings and lets builders, owners and agents submit
+                  properties for publication.
                 </p>
                 <p>
-                  We work with verified, RERA-registered builders across the
-                  city to bring you the best{" "}
+                  Listings may be submitted by builders, property owners and
+                  agents. Search categories include{" "}
                   <strong>apartments, villas, plots and commercial properties</strong>{" "}
-                  in prime locations like MVP Colony, Madhurawada, Rushikonda,
-                  Gajuwaka, Beach Road, Dwaraka Nagar, Kommadi, Pendurthi and
-                  more.
+                  in localities such as MVP Colony, Madhurawada, Rushikonda,
+                  Gajuwaka, Beach Road, Dwaraka Nagar, Kommadi and Pendurthi.
+                  Listing details are supplied by the account holder and should
+                  be independently checked.
                 </p>
                 <p>
-                  Whether you are a first-time buyer, an NRI investor or looking
-                  for your dream home, our local experts help you at every step
-                  - from property selection to site visits, documentation and
-                  possession.
+                  Visitors can send enquiries through the site and may contact
+                  us to discuss next steps. Buyers should arrange their own
+                  inspections and obtain independent legal, financial and
+                  property advice before proceeding.
                 </p>
               </div>
             </div>
@@ -165,7 +167,7 @@ export default function AboutPage() {
                 <div className="rounded-2xl overflow-hidden aspect-[3/4]">
                   <Image
                     src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=800&fit=crop"
-                    alt="Vizag Properties team meeting"
+                    alt="Business meeting"
                     width={300}
                     height={400}
                     className="w-full h-full object-cover"
@@ -174,7 +176,7 @@ export default function AboutPage() {
                 <div className="rounded-2xl overflow-hidden aspect-[3/4] mt-8">
                   <Image
                     src="https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=600&h=800&fit=crop"
-                    alt="Modern apartment in Vizag"
+                    alt="Modern apartment interior"
                     width={300}
                     height={400}
                     className="w-full h-full object-cover"
@@ -198,10 +200,9 @@ export default function AboutPage() {
                 Our Mission
               </h3>
               <p className="mt-3 text-slate-700 leading-relaxed">
-                To simplify property buying in Visakhapatnam by connecting
-                buyers with verified builders, providing transparent
-                information and offering free expert consultation - so that
-                every Vizag family finds their perfect home with confidence.
+                To make it easier to search seller-submitted property listings
+                and send enquiries for homes and commercial spaces in
+                Visakhapatnam.
               </p>
             </div>
             <div className="rounded-2xl bg-gradient-to-br from-gold-500/10 to-white border border-gold-500/20 p-8">
@@ -212,10 +213,8 @@ export default function AboutPage() {
                 Our Vision
               </h3>
               <p className="mt-3 text-slate-700 leading-relaxed">
-                To become India&apos;s most trusted real estate platform by setting
-                the gold standard in property discovery, builder verification
-                and customer service - starting from Vizag and expanding to
-                every growing city.
+                To maintain a useful online directory of property listings and
+                enquiry tools for the Visakhapatnam area.
               </p>
             </div>
           </div>
@@ -267,17 +266,17 @@ export default function AboutPage() {
             <FeatureCard
               icon={Home}
               title="Residential Properties"
-              description="Apartments, villas, independent houses, penthouses and plots across Vizag's best neighborhoods."
+              description="Search apartments, villas, independent houses, penthouses and plots listed in Visakhapatnam and nearby areas."
             />
             <FeatureCard
               icon={Building2}
               title="Commercial Properties"
-              description="Offices, retail showrooms, commercial spaces and mixed-use developments in prime business districts."
+              description="Browse seller-submitted offices, retail showrooms, commercial spaces and mixed-use properties."
             />
             <FeatureCard
               icon={Key}
-              title="End-to-End Support"
-              description="From property search to home loan, legal verification to registration - we assist throughout."
+              title="Search & Enquiry Tools"
+              description="Search listings and submit enquiries. Arrange your own legal, financial and property checks before making a decision."
             />
           </div>
         </div>
@@ -292,12 +291,13 @@ export default function AboutPage() {
                 Coverage
               </div>
               <h2 className="mt-2 text-3xl md:text-4xl font-bold text-slate-900">
-                Serving All of Visakhapatnam
+                Locality Search for Vizag &amp; Nearby Areas
               </h2>
               <p className="mt-3 text-slate-600">
-                Our local team has in-depth knowledge of every major locality
-                in Vizag. From beachfront properties in Bheemunipatnam to
-                affordable homes in Gajuwaka - we cover the entire city.
+                Search suggestions cover Visakhapatnam and nearby Greater Vizag
+                settlements. They are property-search labels, not a statement
+                that every place is within GVMC limits or that listings exist
+                in each locality.
               </p>
               <div className="mt-5 grid grid-cols-2 gap-2 text-sm">
                 {[
@@ -318,7 +318,7 @@ export default function AboutPage() {
                     key={loc}
                     className="flex items-center gap-2 text-slate-700"
                   >
-                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <MapPin className="h-4 w-4 text-brand-500 flex-shrink-0" />
                     {loc}
                   </div>
                 ))}

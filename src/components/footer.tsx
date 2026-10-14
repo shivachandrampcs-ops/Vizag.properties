@@ -54,15 +54,14 @@ export function Footer() {
                   Vizag<span className="text-gold-400">Properties</span>
                 </div>
                 <div className="text-[10px] text-slate-400 font-medium tracking-wider uppercase leading-none mt-1">
-                  Trusted Real Estate
+                  PROPERTY LISTINGS &amp; ENQUIRIES
                 </div>
               </div>
             </Link>
             <p className="mt-4 text-sm text-slate-400 leading-relaxed">
-              Vizag Properties is a trusted real estate platform helping you
-              discover verified apartments, villas, plots and commercial
-              properties across Visakhapatnam. Get free consultation with
-              experienced local property experts.
+              Browse property listings and submit enquiries for Visakhapatnam
+              and nearby areas. Listing details are supplied by sellers and are
+              not a substitute for independent title, approval or RERA checks.
             </p>
             <div className="mt-5 space-y-2 text-sm">
               <a
@@ -284,10 +283,15 @@ export function Footer() {
               © {new Date().getFullYear()} {SITE_CONFIG.name}. All rights
               reserved.
             </p>
-            <p>
-              Built with care for property buyers in Visakhapatnam, Andhra
-              Pradesh.
-            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+              <Link href="/privacy-policy" className="hover:text-white">
+                Privacy Policy
+              </Link>
+              <Link href="/terms-and-conditions" className="hover:text-white">
+                Terms &amp; Conditions
+              </Link>
+              <span>Visakhapatnam, Andhra Pradesh</span>
+            </div>
           </div>
         </div>
       </div>

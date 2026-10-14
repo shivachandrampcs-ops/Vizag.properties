@@ -42,11 +42,11 @@ export default async function SellerProfilePage() {
         {account.isVerified ? (
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
             <BadgeCheck className="h-4 w-4" />
-            Verified account
+            Account reviewed
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">
-            Pending verification
+            Not yet reviewed
           </span>
         )}
       </div>

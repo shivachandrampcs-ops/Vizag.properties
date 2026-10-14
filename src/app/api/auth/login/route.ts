@@ -5,14 +5,11 @@ import {
   authenticateSeller,
   setSessionCookie,
 } from "@/lib/auth";
+import { loginSchema } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
 
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  /** "builder" logs in any seller account type (builder, owner or agent). */
-  role: z.enum(["admin", "builder"]),
-});
+const roleSchema = z.object({ role: z.enum(["admin", "builder"]) });
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,30 +18,49 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ||
       "unknown";
 
-    const limit = rateLimit(`login:${ip}`, 20, 15 * 60 * 1000);
-    if (!limit.ok) {
+    const ipLimit = rateLimit(`login:${ip}`, 20, LOGIN_WINDOW_MS);
+    if (!ipLimit.ok) {
       return NextResponse.json(
         {
           success: false,
-          error: `Too many login attempts. Try again in ${limit.retryAfterSeconds}s.`,
+          error: `Too many login attempts. Try again in ${ipLimit.retryAfterSeconds}s.`,
         },
         { status: 429 }
       );
     }
 
     const body = await req.json().catch(() => null);
-    const parsed = schema.safeParse(body);
-    if (!parsed.success) {
+    const role = roleSchema.safeParse(body);
+    const parsed = loginSchema.safeParse(body);
+    if (!role.success || !parsed.success) {
       return NextResponse.json(
-        { success: false, error: "Invalid input" },
+        { success: false, error: "Please enter a valid email and password" },
         { status: 400 }
       );
     }
-    const { email, password, role } = parsed.data;
+
+    const email = parsed.data.email;
+    const emailLimit = rateLimit(
+      `login-email:${email}`,
+      10,
+      LOGIN_WINDOW_MS
+    );
+    if (!emailLimit.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many login attempts. Try again in ${emailLimit.retryAfterSeconds}s.`,
+        },
+        { status: 429 }
+      );
+    }
+
+    // The submitted role only selects which existing account table is queried.
+    // It never grants a role; public signup cannot create admins.
     const user =
-      role === "admin"
-        ? await authenticateAdmin(email, password)
-        : await authenticateSeller(email, password);
+      role.data.role === "admin"
+        ? await authenticateAdmin(email, parsed.data.password)
+        : await authenticateSeller(email, parsed.data.password);
 
     if (!user) {
       return NextResponse.json(
@@ -55,8 +71,9 @@ export async function POST(req: NextRequest) {
 
     await setSessionCookie(user);
     return NextResponse.json({ success: true, user });
-  } catch (err) {
-    console.error("Login error:", err);
+  } catch {
+    // Do not log submitted credentials or account data.
+    console.error("Login request failed");
     return NextResponse.json(
       { success: false, error: "Server error" },
       { status: 500 }

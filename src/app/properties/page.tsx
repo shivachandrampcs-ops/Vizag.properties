@@ -9,20 +9,21 @@ import { LeadForm } from "@/components/lead-form";
 import { Building2, Sparkles, PlusCircle } from "lucide-react";
 import type { PropertyWithRelations } from "@/lib/utils-types";
 import { SITE_CONFIG } from "@/lib/utils";
+import { defaultAreaUnitForType, areaUnitLabel } from "@/lib/area-units";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Properties in Vizag | Apartments, Villas, Plots & Commercial",
   description:
-    "Browse 500+ verified properties in Visakhapatnam - apartments, villas, plots, independent houses and commercial properties. Filter by location, budget, bedrooms and more.",
+    "Browse seller-submitted property listings in Visakhapatnam. Filter by locality, budget, property type and area; independently verify listing details.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/properties`,
   },
   openGraph: {
     title: "Properties in Vizag | Vizag Properties",
     description:
-      "Browse 500+ verified properties in Visakhapatnam - apartments, villas, plots and commercial properties.",
+      "Search seller-submitted apartments, villas, plots and commercial property listings in Visakhapatnam.",
     url: `${SITE_CONFIG.url}/properties`,
     type: "website",
   },
@@ -35,6 +36,8 @@ type SearchParams = Promise<{
   status?: string;
   budget?: string;
   bedrooms?: string;
+  minArea?: string;
+  maxArea?: string;
 }>;
 
 export default async function PropertiesPage({
@@ -52,6 +55,16 @@ export default async function PropertiesPage({
     maxPrice = parts[1] ? Number(parts[1]) : undefined;
   }
 
+  const parsePositiveArea = (value?: string) => {
+    if (!value) return undefined;
+    const parsed = Number(value);
+    return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+  };
+  const minArea = parsePositiveArea(sp.minArea);
+  const maxArea = parsePositiveArea(sp.maxArea);
+  const areaUnit = defaultAreaUnitForType(sp.type ?? "");
+  const hasAreaFilter = minArea !== undefined || maxArea !== undefined;
+
   let properties: PropertyWithRelations[] = [];
   try {
     properties = await getProperties({
@@ -61,6 +74,9 @@ export default async function PropertiesPage({
       status: sp.status,
       minPrice,
       maxPrice,
+      minArea: hasAreaFilter ? minArea : undefined,
+      maxArea: hasAreaFilter ? maxArea : undefined,
+      areaUnit: hasAreaFilter ? areaUnit : undefined,
       bedrooms: sp.bedrooms ? Number(sp.bedrooms) : undefined,
     });
   } catch (e) {
@@ -91,11 +107,14 @@ export default async function PropertiesPage({
         },
         numberOfBedrooms: p.bedrooms ?? undefined,
         numberOfBathroomsTotal: p.bathrooms ?? undefined,
-        floorSize: {
-          "@type": "QuantitativeValue",
-          value: p.area,
-          unitCode: "FTK",
-        },
+        floorSize: p.areaUnit
+          ? {
+              "@type": "QuantitativeValue",
+              value: p.area,
+              ...(p.areaUnit === "sqft" ? { unitCode: "FTK" } : {}),
+              unitText: areaUnitLabel(p.areaUnit),
+            }
+          : undefined,
         offers: {
           "@type": "Offer",
           price: p.price,
@@ -119,6 +138,10 @@ export default async function PropertiesPage({
         .map((n) => `₹ ${(Number(n) / 100000).toFixed(0)} L`)
         .join(" - "),
       key: "budget",
+    },
+    hasAreaFilter && {
+      label: `${minArea ?? "Any"}–${maxArea ?? "Any"} ${areaUnitLabel(areaUnit)}`,
+      key: "area",
     },
   ].filter(Boolean) as { label: string; key: string }[];
 
@@ -147,9 +170,9 @@ export default async function PropertiesPage({
             Properties in Visakhapatnam
           </h1>
           <p className="mt-3 text-slate-600 max-w-2xl">
-            Discover {properties.length > 0 ? properties.length : "hundreds of"}{" "}
-            verified apartments, villas, plots and commercial properties across
-            Vizag.
+            Browse {properties.length} current seller-submitted apartment,
+            villa, plot and commercial listings across Vizag. Listing claims
+            should be checked independently.
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link
@@ -160,8 +183,8 @@ export default async function PropertiesPage({
               List Your Property
             </Link>
             <span className="text-xs text-slate-500">
-              Owners, builders and agents — every listing is reviewed before it
-              goes live.
+              Owners, builders and agents can submit listings. Platform review
+              is not independent property verification.
             </span>
           </div>
         </div>
@@ -177,6 +200,8 @@ export default async function PropertiesPage({
               location: sp.location,
               propertyType: sp.type,
               budget: sp.budget,
+              minArea: minArea?.toString() ?? "",
+              maxArea: maxArea?.toString() ?? "",
             }}
           />
         </div>
@@ -220,8 +245,7 @@ export default async function PropertiesPage({
                 No properties match your filters
               </h3>
               <p className="mt-2 text-slate-600 max-w-md mx-auto">
-                Try adjusting your filters or contact us directly. Our experts
-                can help you find the perfect property in Vizag.
+                Try adjusting your filters or send us an enquiry. Listing availability and details are provided by account holders and should be checked independently.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
@@ -236,7 +260,7 @@ export default async function PropertiesPage({
                   rel="noopener noreferrer"
                   className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50"
                 >
-                  Chat with Expert
+                  Contact Us on WhatsApp
                 </a>
               </div>
             </div>
@@ -262,22 +286,22 @@ export default async function PropertiesPage({
                 Tell Us Your Requirements
               </h2>
               <p className="mt-3 text-slate-600">
-                Our local Vizag experts will personally shortlist verified
-                properties that match your needs. Free consultation, no
-                obligations.
+                Tell us what you are looking for and we can review your
+                enquiry. Listing details and legal status must be confirmed
+                independently with the seller.
               </p>
               <ul className="mt-5 space-y-2 text-slate-700">
                 <li className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
-                  Personalized property shortlist
+                  Submit a property enquiry
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
-                  Complimentary site visits
+                  Contact the operator to discuss next steps
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
-                  Investment & loan guidance
+                  Arrange your own independent legal and financial advice
                 </li>
               </ul>
             </div>

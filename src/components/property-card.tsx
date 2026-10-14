@@ -60,7 +60,7 @@ export function PropertyCard({
             </div>
             {property.pricePerSqft && (
               <div className="text-xs text-slate-300">
-                ₹ {property.pricePerSqft.toLocaleString("en-IN")} / sqft
+                ₹ {property.pricePerSqft.toLocaleString("en-IN")} / sq. ft.
               </div>
             )}
           </div>
@@ -96,7 +96,9 @@ export function PropertyCard({
           )}
           <div className="flex items-center gap-1.5">
             <Square className="h-4 w-4 text-brand-600" />
-            <span className="font-medium">{formatArea(property.area)}</span>
+            <span className="font-medium">
+              {formatArea(property.area, property.areaUnit)}
+            </span>
           </div>
         </div>
 

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { builders } from "@/db/schema";
-import { and, eq, ne } from "drizzle-orm";
+import { admins, builders } from "@/db/schema";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { sellerProfileSchema } from "@/lib/validations";
 import { requireSeller, readJson } from "@/lib/api-guards";
+import { findSellerAccountsByMobile } from "@/lib/auth";
+import { normalizeIndianMobile } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 
@@ -42,17 +44,51 @@ export async function PUT(req: NextRequest) {
     }
 
     const data = parsed.data;
-    const email = data.email.toLowerCase().trim();
+    const email = data.email.trim().toLowerCase();
+    const mobile = normalizeIndianMobile(data.phone);
+    const whatsappNumber = data.whatsappNumber?.trim()
+      ? normalizeIndianMobile(data.whatsappNumber)
+      : null;
+    if (data.whatsappNumber?.trim() && !whatsappNumber) {
+      return NextResponse.json(
+        { success: false, error: "Please enter a valid WhatsApp mobile number" },
+        { status: 400 }
+      );
+    }
+    if (!mobile) {
+      return NextResponse.json(
+        { success: false, error: "Please enter a valid Indian mobile number" },
+        { status: 400 }
+      );
+    }
 
-    const [clash] = await db
+    const [sellerEmailClash] = await db
       .select({ id: builders.id })
       .from(builders)
-      .where(and(eq(builders.email, email), ne(builders.id, guard.session.id)))
+      .where(
+        and(
+          sql`lower(btrim(${builders.email})) = ${email}`,
+          ne(builders.id, guard.session.id)
+        )
+      )
+      .limit(1);
+    const [adminEmailClash] = await db
+      .select({ id: admins.id })
+      .from(admins)
+      .where(sql`lower(btrim(${admins.email})) = ${email}`)
       .limit(1);
 
-    if (clash) {
+    if (sellerEmailClash || adminEmailClash) {
       return NextResponse.json(
         { success: false, error: "That email is already used by another account" },
+        { status: 409 }
+      );
+    }
+
+    const mobileAccounts = await findSellerAccountsByMobile(mobile);
+    if (mobileAccounts.some((account) => account.id !== guard.session.id)) {
+      return NextResponse.json(
+        { success: false, error: "That mobile number is already used by another account" },
         { status: 409 }
       );
     }
@@ -62,9 +98,10 @@ export async function PUT(req: NextRequest) {
       .set({
         name: data.name.trim(),
         email,
-        phone: data.phone.trim(),
+        phone: mobile,
+        phoneE164: mobile,
         companyName: data.companyName?.trim() || null,
-        whatsappNumber: data.whatsappNumber?.trim() || null,
+        whatsappNumber,
         locality: data.locality?.trim() || null,
         city: data.city?.trim() || null,
         description: data.description?.trim() || null,
@@ -77,13 +114,10 @@ export async function PUT(req: NextRequest) {
       .where(eq(builders.id, guard.session.id));
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Profile update error:", err);
+  } catch {
+    console.error("Profile update failed");
     return NextResponse.json(
-      {
-        success: false,
-        error: err instanceof Error ? err.message : "Server error",
-      },
+      { success: false, error: "Could not update the profile" },
       { status: 500 }
     );
   }

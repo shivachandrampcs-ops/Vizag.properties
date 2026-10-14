@@ -3,7 +3,7 @@ export type SellerSummary = {
   id: number;
   name: string;
   slug: string;
-  email: string;
+  email: string | null;
   phone: string;
   whatsappNumber?: string | null;
   companyName?: string | null;
@@ -28,6 +28,7 @@ export type PropertyWithRelations = {
   price: number;
   pricePerSqft: number | null;
   area: number;
+  areaUnit: "sqft" | "sqyd" | null;
   bedrooms: number | null;
   bathrooms: number | null;
   balconies: number | null;

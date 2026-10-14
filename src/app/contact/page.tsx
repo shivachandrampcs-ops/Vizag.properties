@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
 import { LeadForm } from "@/components/lead-form";
 import { SITE_CONFIG } from "@/lib/utils";
 import Link from "next/link";
@@ -8,9 +8,9 @@ import { ContactMapWrapper } from "@/components/contact-map-wrapper";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Contact Vizag Properties | Get Free Property Consultation",
+  title: "Contact Vizag Properties | Visakhapatnam",
   description:
-    "Get in touch with Vizag Properties for free property consultation in Visakhapatnam. Call +91 7702434892, WhatsApp or send us a message. We're here to help you find your dream property.",
+    "Contact Vizag Properties by phone or WhatsApp, or send a property enquiry using the contact form. An Indian mobile number is required; email is optional.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/contact`,
   },
@@ -50,8 +50,8 @@ export default function ContactPage() {
               Get in Touch
             </h1>
             <p className="mt-3 text-slate-600 text-lg">
-              Have questions about properties in Vizag? Need expert advice?
-              Our team is here to help you find your perfect home.
+              Questions about the website or a listing? Contact us by phone or
+              WhatsApp, or send a message using the enquiry form below.
             </p>
           </div>
         </div>
@@ -90,10 +90,10 @@ export default function ContactPage() {
                 WhatsApp
               </h3>
               <p className="mt-1 text-sm text-slate-600">
-                Chat with our expert
+                Contact us by WhatsApp
               </p>
               <p className="mt-1 text-xs text-green-600 font-medium">
-                Quick reply →
+                Open WhatsApp →
               </p>
             </a>
 
@@ -115,14 +115,14 @@ export default function ContactPage() {
 
             <div className="group p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-white border border-slate-200">
               <div className="h-12 w-12 rounded-xl bg-slate-800 text-white flex items-center justify-center">
-                <Clock className="h-6 w-6" />
+                <MessageCircle className="h-6 w-6" />
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900">Hours</h3>
+              <h3 className="mt-4 text-lg font-bold text-slate-900">Enquiries</h3>
               <p className="mt-1 text-sm text-slate-600">
-                Mon - Sun: 9:00 AM - 8:00 PM
+                Submit a message using the form below.
               </p>
               <p className="mt-1 text-xs text-slate-500 font-medium">
-                Open all days
+                Mobile number required · email optional
               </p>
             </div>
           </div>
@@ -138,8 +138,7 @@ export default function ContactPage() {
                 Send Us a Message
               </h2>
               <p className="mt-2 text-slate-600">
-                Fill out the form and our team will get back to you within 1
-                hour.
+                Share your message and a valid Indian mobile number. Email is optional.
               </p>
               <div className="mt-6">
                 <LeadForm source="contact_page" />
@@ -147,10 +146,10 @@ export default function ContactPage() {
             </div>
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-                Find Us in Vizag
+                Visakhapatnam Map
               </h2>
               <p className="mt-2 text-slate-600">
-                We operate across Visakhapatnam, Andhra Pradesh.
+                The map is centered on Visakhapatnam city; it is not a verified office location.
               </p>
               <div className="mt-6 h-96 rounded-2xl overflow-hidden border border-slate-200 shadow-lg">
                 <ContactMapWrapper />

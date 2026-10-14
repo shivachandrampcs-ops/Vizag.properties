@@ -89,6 +89,7 @@ export default async function EditSellerPropertyPage({
           price: property.price,
           pricePerSqft: property.pricePerSqft ?? undefined,
           area: property.area,
+          areaUnit: property.areaUnit,
           bedrooms: property.bedrooms ?? 0,
           bathrooms: property.bathrooms ?? 0,
           balconies: property.balconies ?? 0,

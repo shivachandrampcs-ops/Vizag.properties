@@ -78,7 +78,7 @@ export function Navbar() {
           </div>
           <div className="flex items-center gap-4 ml-auto">
             <span className="hidden md:inline text-slate-200">
-              Free Property Consultation
+              Property enquiries in Visakhapatnam
             </span>
             <a
               href={SITE_CONFIG.whatsapp}
@@ -105,7 +105,7 @@ export function Navbar() {
                 Vizag<span className="text-brand-600">Properties</span>
               </div>
               <div className="text-[10px] text-slate-500 font-medium tracking-wider uppercase leading-none mt-1">
-                Trusted Real Estate
+                Listings &amp; Enquiries
               </div>
             </div>
           </Link>

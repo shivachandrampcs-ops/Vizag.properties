@@ -10,6 +10,10 @@ import { createPropertySlug } from "./slug";
 import { deleteImage } from "./uploads";
 import { notify } from "./notifications";
 import { toStringList, type PropertyPayloadInput } from "./validations";
+import {
+  defaultAreaUnitForType,
+  type PropertyAreaUnit,
+} from "./area-units";
 
 /**
  * Shared property CRUD used by BOTH the seller API (`/api/seller/properties`)
@@ -64,6 +68,38 @@ function toNumber(value?: number | null): number | null {
     : value;
 }
 
+function areaUnitError(
+  payload: PropertyPayloadInput,
+  existing?: typeof properties.$inferSelect
+): string | null {
+  const expected = defaultAreaUnitForType(payload.propertyType);
+  const unit = payload.areaUnit ?? null;
+
+  if (existing && existing.propertyType !== payload.propertyType && !unit) {
+    return "Changing property type requires re-entering the area with its new unit.";
+  }
+
+  if (
+    unit &&
+    unit !== expected &&
+    !(existing && existing.propertyType === payload.propertyType && existing.areaUnit === unit) &&
+    !(existing && existing.areaUnit === null && existing.propertyType === payload.propertyType)
+  ) {
+    return `Area unit must be ${expected === "sqyd" ? "square yards" : "square feet"} for this property type.`;
+  }
+
+  return null;
+}
+
+function resolveAreaUnit(
+  payload: PropertyPayloadInput,
+  existing?: typeof properties.$inferSelect
+): PropertyAreaUnit | null {
+  if (payload.areaUnit) return payload.areaUnit;
+  if (existing) return existing.areaUnit ?? null;
+  return defaultAreaUnitForType(payload.propertyType);
+}
+
 type WriteArgs = {
   payload: PropertyPayloadInput;
   /** Who is performing the write — determines ownership + moderation rules. */
@@ -94,6 +130,7 @@ function buildRow({ payload, actor, accountId, adminId, existing }: WriteArgs) {
     price: payload.price,
     pricePerSqft: toNumber(payload.pricePerSqft),
     area: payload.area,
+    areaUnit: resolveAreaUnit(payload, existing),
     bedrooms: payload.bedrooms ?? 0,
     bathrooms: payload.bathrooms ?? 0,
     balconies: payload.balconies ?? 0,
@@ -213,6 +250,10 @@ export async function syncPropertyImages(
 }
 
 export async function createProperty(args: WriteArgs) {
+  const unitError = areaUnitError(args.payload);
+  if (unitError) {
+    return { ok: false as const, status: 400, error: unitError };
+  }
   const row = buildRow(args);
   if (args.actor === "admin") {
     if (!args.targetAccountId) {
@@ -251,6 +292,10 @@ export async function updateProperty(
   propertyId: number,
   args: WriteArgs
 ) {
+  const unitError = areaUnitError(args.payload, args.existing);
+  if (unitError) {
+    return { ok: false as const, status: 400, error: unitError };
+  }
   const row = buildRow(args);
 
   if (args.actor === "admin" && args.targetAccountId) {

@@ -8,7 +8,7 @@ import { requireSellerPage } from "@/lib/page-guards";
 import { getSellerProperties } from "@/lib/queries";
 import { DeletePropertyButton } from "@/components/delete-property-button";
 import { ModerationBadge } from "@/components/moderation-badge";
-import { formatPrice, statusLabel } from "@/lib/utils";
+import { formatPrice, formatArea, statusLabel } from "@/lib/utils";
 import {
   Building2,
   Plus,
@@ -130,7 +130,7 @@ export default async function SellerPropertiesPage() {
                               {p.title}
                             </div>
                             <div className="text-xs text-slate-500">
-                              {p.bedrooms ?? 0} BHK • {p.area} sqft
+                              {p.bedrooms ?? 0} BHK • {formatArea(p.area, p.areaUnit)}
                             </div>
                             {p.moderationStatus === "rejected" &&
                               p.rejectionReason && (

@@ -3,7 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Search, MapPin, Home, IndianRupee } from "lucide-react";
-import { VIZAG_LOCATIONS } from "@/lib/utils";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
+import {
+  defaultAreaUnitForType,
+  areaUnitLabel,
+  type PropertyAreaUnit,
+} from "@/lib/area-units";
 
 export function PropertySearchBar({
   variant = "hero",
@@ -15,6 +20,8 @@ export function PropertySearchBar({
     location?: string;
     propertyType?: string;
     budget?: string;
+    minArea?: string;
+    maxArea?: string;
   };
 }) {
   const router = useRouter();
@@ -24,37 +31,47 @@ export function PropertySearchBar({
     initialValues?.propertyType ?? ""
   );
   const [budget, setBudget] = useState(initialValues?.budget ?? "");
+  const [minArea, setMinArea] = useState(initialValues?.minArea ?? "");
+  const [maxArea, setMaxArea] = useState(initialValues?.maxArea ?? "");
+  const [areaUnit, setAreaUnit] = useState<PropertyAreaUnit>(
+    defaultAreaUnitForType(initialValues?.propertyType ?? "")
+  );
 
-  // Re-sync local field state whenever the incoming initialValues change
-  // (e.g. the URL search params update on the server-rendered parent).
-  // Adjusting state during render avoids the extra cascading render that
-  // a `useEffect` with these values as dependencies would trigger.
+  // Re-sync local field state when URL-backed filters change.
   const [prevInitialValues, setPrevInitialValues] = useState(initialValues);
   if (
     prevInitialValues?.search !== initialValues?.search ||
     prevInitialValues?.location !== initialValues?.location ||
     prevInitialValues?.propertyType !== initialValues?.propertyType ||
-    prevInitialValues?.budget !== initialValues?.budget
+    prevInitialValues?.budget !== initialValues?.budget ||
+    prevInitialValues?.minArea !== initialValues?.minArea ||
+    prevInitialValues?.maxArea !== initialValues?.maxArea
   ) {
     setPrevInitialValues(initialValues);
     setSearch(initialValues?.search ?? "");
     setLocation(initialValues?.location ?? "");
     setPropertyType(initialValues?.propertyType ?? "");
     setBudget(initialValues?.budget ?? "");
+    setMinArea(initialValues?.minArea ?? "");
+    setMaxArea(initialValues?.maxArea ?? "");
+    setAreaUnit(defaultAreaUnitForType(initialValues?.propertyType ?? ""));
   }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (location) params.set("location", location);
+    if (search.trim()) params.set("search", search.trim());
+    if (location.trim()) params.set("location", location.trim());
     if (propertyType) params.set("type", propertyType);
     if (budget) params.set("budget", budget);
+    if (minArea) params.set("minArea", minArea);
+    if (maxArea) params.set("maxArea", maxArea);
     router.push(`/properties${params.toString() ? "?" + params.toString() : ""}`);
   }
 
   const inputClass =
     "w-full pl-11 pr-3 py-3.5 rounded-xl bg-white text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 border border-slate-200 transition-colors";
+  const areaRangeEnabled = variant === "inline";
 
   return (
     <form
@@ -78,31 +95,31 @@ export function PropertySearchBar({
           />
         </div>
         <div className="relative">
-          <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 pointer-events-none" />
-          <select
+          <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 pointer-events-none z-10" />
+          <LocationAutocomplete
+            id="property-search-location"
+            suggestionsId="property-search-location-options"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className={inputClass + " appearance-none cursor-pointer"}
-            aria-label="Location"
-          >
-            <option value="">All Locations</option>
-            {VIZAG_LOCATIONS.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
-              </option>
-            ))}
-          </select>
+            placeholder="All locations"
+            className={inputClass}
+            aria-label="Search by locality"
+          />
         </div>
         <div className="relative">
           <Home className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 pointer-events-none" />
           <select
             value={propertyType}
-            onChange={(e) => setPropertyType(e.target.value)}
+            onChange={(e) => {
+              const nextType = e.target.value;
+              setPropertyType(nextType);
+              setAreaUnit(defaultAreaUnitForType(nextType));
+            }}
             className={inputClass + " appearance-none cursor-pointer"}
             aria-label="Property type"
           >
             <option value="">All Types</option>
-            <option value="apartment">Apartment</option>
+            <option value="apartment">Flat / Apartment</option>
             <option value="villa">Villa</option>
             <option value="plot">Plot</option>
             <option value="independent_house">Independent House</option>
@@ -129,6 +146,45 @@ export function PropertySearchBar({
           </select>
         </div>
       </div>
+
+      {areaRangeEnabled && (
+        <fieldset className="mt-3 rounded-xl border border-slate-200 px-3 pb-3 pt-2">
+          <legend className="px-1 text-xs font-semibold text-slate-600">
+            Area range ({areaUnitLabel(areaUnit)})
+          </legend>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="text-xs font-medium text-slate-600">
+              Minimum area
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={minArea}
+                onChange={(e) => setMinArea(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="No minimum"
+              />
+            </label>
+            <label className="text-xs font-medium text-slate-600">
+              Maximum area
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={maxArea}
+                onChange={(e) => setMaxArea(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="No maximum"
+              />
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            The area unit follows the selected property type. Legacy listings
+            without a recorded unit are not included in area-range results.
+          </p>
+        </fieldset>
+      )}
+
       <button
         type="submit"
         className="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition-colors"

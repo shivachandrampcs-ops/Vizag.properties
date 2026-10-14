@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Register | List Your Property in Vizag",
   description:
-    "Create a free Vizag Properties account as a builder, property owner or real estate agent and start listing properties in Visakhapatnam.",
+    "Create a Vizag Properties seller account with a mobile number as a builder, property owner or agent and submit property listings in Visakhapatnam.",
   robots: { index: false, follow: false },
   alternates: { canonical: `${SITE_CONFIG.url}/register` },
 };
@@ -56,8 +56,8 @@ export default async function RegisterPage({
               Create your {PUBLISHER_TYPE_LABEL[type]} account
             </h1>
             <p className="mt-1 text-sm text-brand-100">
-              List your property in Visakhapatnam and receive enquiries from
-              genuine buyers.
+              Submit property details for publication and receive enquiries
+              when people contact you through the site.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {(["builder", "owner", "agent"] as const).map((t) => (

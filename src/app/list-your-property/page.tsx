@@ -21,16 +21,16 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "List Your Property in Vizag | Free for Owners, Builders & Agents",
+  title: "List Your Property in Vizag | Owners, Builders & Agents",
   description:
-    "List your apartment, villa, plot, independent house or commercial property in Visakhapatnam. Free registration for builders, property owners and real estate agents. Verified by the Vizag Properties team before publishing.",
+    "Submit apartment, villa, plot, independent house or commercial property listings in Visakhapatnam as a builder, property owner or agent. Submissions may be reviewed for platform rules, not property verification.",
   alternates: {
     canonical: `${SITE_CONFIG.url}/list-your-property`,
   },
   openGraph: {
     title: "List Your Property in Vizag | Vizag Properties",
     description:
-      "Register as a builder, property owner or agent and list your property in Visakhapatnam. Every listing is reviewed by our team.",
+      "Register as a builder, property owner or agent and submit a property listing in Visakhapatnam. Listing review is not independent property verification.",
     url: `${SITE_CONFIG.url}/list-your-property`,
     type: "website",
   },
@@ -44,20 +44,20 @@ const ACCOUNT_ICONS = {
 
 const STEPS = [
   {
-    title: "Create your free account",
-    body: "Tell us who you are — builder, property owner or agent. It takes less than a minute.",
+    title: "Create a seller account",
+    body: "Choose a role — builder, property owner or agent — and register with your mobile number.",
   },
   {
     title: "Add your property",
     body: "Fill in the details and upload photos straight from your phone or computer.",
   },
   {
-    title: "Submit for review",
-    body: "Our team checks the listing, RERA details and photos, then publishes it.",
+    title: "Submit for moderation",
+    body: "Submissions may be reviewed for platform rules. Moderation does not verify property, title or RERA details.",
   },
   {
-    title: "Start receiving enquiries",
-    body: "Buyer enquiries land in your dashboard so you can respond instantly.",
+    title: "Manage enquiries",
+    body: "When enquiries are received, review them in your dashboard and follow up with the person who contacted you.",
   },
 ];
 
@@ -88,10 +88,10 @@ export default function ListYourPropertyPage() {
             </span>
           </h1>
           <p className="mt-4 text-lg text-slate-200 max-w-2xl">
-            Reach genuine buyers across Visakhapatnam. Register as a builder,
-            property owner or real estate agent, add your property with photos
-            and submit it for review — our team verifies every listing before it
-            goes live.
+            Submit a property listing for Visakhapatnam. Register as a builder,
+            property owner or real estate agent, add details and photos, and
+            submit for moderation. Moderation does not verify the property or
+            the accuracy of seller-provided information.
           </p>
 
           <div className="mt-8">
@@ -162,18 +162,18 @@ export default function ListYourPropertyPage() {
         </div>
       </section>
 
-      {/* Requirements + review promise */}
+      {/* Listing information and moderation scope */}
       <section className="py-14 md:py-20 section-gradient">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-8">
           <div className="rounded-2xl bg-white border border-slate-200 p-6 md:p-8">
             <div className="flex items-center gap-2 text-brand-600">
               <ShieldCheck className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-wider">
-                What we check
+                Listing information
               </span>
             </div>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              Keep these ready for a fast approval
+              Prepare clear and accurate details
             </h2>
             <ul className="mt-4 space-y-2">
               {REQUIREMENTS.map((r) => (
@@ -186,9 +186,10 @@ export default function ListYourPropertyPage() {
             <div className="mt-6 rounded-xl bg-amber-50 border border-amber-200 p-4 flex items-start gap-2">
               <Clock className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800">
-                Every listing is reviewed by the Vizag Properties team before it
-                appears on the website. Drafts, pending and rejected listings are
-                never shown publicly.
+                Submissions may be reviewed for platform rules before
+                publication. A review does not verify the seller&apos;s claims,
+                ownership, title, approvals, RERA status, photographs or property
+                condition.
               </p>
             </div>
           </div>
@@ -199,8 +200,9 @@ export default function ListYourPropertyPage() {
                 Prefer to talk to someone first?
               </h2>
               <p className="mt-2 text-brand-100">
-                Our local team will help you create the listing and click photos
-                if needed.
+                For questions about using the website, contact us by phone or
+                WhatsApp. Assistance with creating a listing or taking photos is
+                not guaranteed.
               </p>
             </div>
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -232,7 +234,7 @@ export default function ListYourPropertyPage() {
             Ready to list your property?
           </h2>
           <p className="mt-2 text-slate-600">
-            Pick your account type and create your free listing today.
+            Pick an account type and submit a property listing.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
             {PUBLISHER_TYPES.map((type, i) => (

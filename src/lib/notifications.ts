@@ -37,7 +37,7 @@ export async function notify(
   console.info(
     `[notify:${event}]`,
     JSON.stringify({
-      to: payload.to?.email ?? payload.to?.phone ?? null,
+      hasRecipient: Boolean(payload.to?.email || payload.to?.phone),
       subject: payload.subject ?? null,
       data: payload.data ?? null,
     })
